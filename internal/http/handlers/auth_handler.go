@@ -12,7 +12,6 @@ type AuthHandler struct {
 	AuthService domain.AuthService
 }
 
-// Login handles POST /api/auth/login
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

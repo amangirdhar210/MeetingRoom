@@ -17,7 +17,6 @@ func NewAuthService(repo domain.UserRepository) *AuthService {
 	return &AuthService{userRepo: repo}
 }
 
-// HashPassword securely hashes a plaintext password
 func (s *AuthService) HashPassword(password string) (string, error) {
 	if password == "" {
 		return "", domain.ErrInvalidInput

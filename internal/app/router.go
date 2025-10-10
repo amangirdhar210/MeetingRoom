@@ -1,48 +1,68 @@
 package app
 
 import (
+	"database/sql"
 	"net/http"
-
-	"github.com/gorilla/mux"
 
 	"github.com/amangirdhar210/meeting-room/internal/http/handlers"
 	"github.com/amangirdhar210/meeting-room/internal/http/middleware"
+	"github.com/amangirdhar210/meeting-room/internal/repositories/mysql"
+	"github.com/amangirdhar210/meeting-room/internal/service"
+	"github.com/gorilla/mux"
 )
 
-func NewRouter(
-	authHandler *handlers.AuthHandler,
-	userHandler *handlers.UserHandler,
-	roomHandler *handlers.RoomHandler,
-	bookingHandler *handlers.BookingHandler,
-	jwtSecret string,
-) *mux.Router {
+// SetupRouter wires repositories -> services -> handlers and registers routes.
+// It intentionally uses direct struct literals for handlers so no constructor
+// functions are required in your handlers package.
+func SetupRouter(db *sql.DB, jwtSecret string) http.Handler {
+	// repositories
+	userRepo := mysql.NewUserRepositoryMySQL(db)
+	roomRepo := mysql.NewRoomRepositoryMySQL(db)
+	bookingRepo := mysql.NewBookingRepositoryMySQL(db)
+
+	// services (AuthService uses userRepo; JWT secret should be initialized in main)
+	authService := service.NewAuthService(userRepo)
+	userService := service.NewUserService(userRepo, authService)
+	roomService := service.NewRoomService(roomRepo)
+	bookingService := service.NewBookingService(bookingRepo, roomRepo, userRepo)
+
+	// handlers (use literals so you don't need NewXxx constructors)
+	authHandler := &handlers.AuthHandler{AuthService: authService}
+	userHandler := &handlers.UserHandler{UserService: userService}
+	roomHandler := &handlers.RoomHandler{RoomService: roomService}
+	bookingHandler := &handlers.BookingHandler{BookingService: bookingService}
+
+	// router
 	r := mux.NewRouter()
 
-	// Global middlewares
-	r.Use(middleware.LoggingMiddleware)
+	// public
+	r.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
+	}).Methods("GET")
 
-	// Public routes (no JWT)
-	auth := r.PathPrefix("/api/auth").Subrouter()
-	auth.HandleFunc("/login", authHandler.Login).Methods(http.MethodPost)
-	auth.HandleFunc("/register", userHandler.RegisterUser).Methods(http.MethodPost)
+	// register/login
+	r.HandleFunc("/api/register", userHandler.RegisterUser).Methods("POST")
+	r.HandleFunc("/api/login", authHandler.Login).Methods("POST")
 
-	// Protected routes (JWT)
+	// protected API subrouter
 	api := r.PathPrefix("/api").Subrouter()
+	// logging first, then JWT auth
+	api.Use(middleware.LoggingMiddleware)
 	api.Use(middleware.JWTAuthMiddleware(jwtSecret))
 
-	// Users
-	api.HandleFunc("/users", userHandler.GetAllUsers).Methods(http.MethodGet)
-	api.HandleFunc("/users/{id:[0-9]+}", userHandler.GetAllUsers).Methods(http.MethodGet)
+	// users
+	api.HandleFunc("/users", userHandler.GetAllUsers).Methods("GET")
 
-	// Rooms
-	api.HandleFunc("/rooms", roomHandler.GetAllRooms).Methods(http.MethodGet)
-	api.HandleFunc("/rooms", roomHandler.AddRoom).Methods(http.MethodPost)
-	api.HandleFunc("/rooms/{id:[0-9]+}", roomHandler.GetRoomByID).Methods(http.MethodGet)
+	// rooms
+	api.HandleFunc("/rooms", roomHandler.AddRoom).Methods("POST")
+	api.HandleFunc("/rooms", roomHandler.GetAllRooms).Methods("GET")
+	api.HandleFunc("/rooms/{id:[0-9]+}", roomHandler.GetRoomByID).Methods("GET")
 
-	// Bookings
-	api.HandleFunc("/bookings", bookingHandler.CreateBooking).Methods(http.MethodPost)
-	api.HandleFunc("/bookings", bookingHandler.GetAllBookings).Methods(http.MethodGet)
-	api.HandleFunc("/bookings/{id:[0-9]+}/cancel", bookingHandler.CancelBooking).Methods(http.MethodPost)
+	// bookings
+	api.HandleFunc("/bookings", bookingHandler.CreateBooking).Methods("POST")
+	api.HandleFunc("/bookings", bookingHandler.GetAllBookings).Methods("GET")
+	api.HandleFunc("/bookings/{id:[0-9]+}", bookingHandler.CancelBooking).Methods("DELETE")
 
 	return r
 }

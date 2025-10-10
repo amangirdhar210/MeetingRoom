@@ -3,9 +3,9 @@ package dto
 import "time"
 
 type CreateBookingRequest struct {
-	UserID    int64  `json:"user_id"` // handler injects userID from JWT
+	UserID    int64  `json:"user_id"`
 	RoomID    int64  `json:"room_id" validate:"required"`
-	StartTime string `json:"start_time" validate:"required,datetime"` // RFC3339
+	StartTime string `json:"start_time" validate:"required,datetime"`
 	EndTime   string `json:"end_time" validate:"required,datetime"`
 	Purpose   string `json:"purpose" validate:"required"`
 }
