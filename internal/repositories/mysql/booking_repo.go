@@ -16,7 +16,6 @@ func NewBookingRepositoryMySQL(db *sql.DB) domain.BookingRepository {
 	return &BookingRepositoryMySQL{db: db}
 }
 
-// internal helper
 func (r *BookingRepositoryMySQL) checkAvailability(roomID int64, startTime, endTime time.Time) (bool, error) {
 	query := `
 		SELECT COUNT(*) 
@@ -45,7 +44,7 @@ func (r *BookingRepositoryMySQL) Create(booking *domain.Booking) error {
 		return err
 	}
 	if !available {
-		return domain.ErrConflict // already booked
+		return domain.ErrConflict
 	}
 
 	query := `

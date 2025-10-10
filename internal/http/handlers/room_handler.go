@@ -14,7 +14,6 @@ type RoomHandler struct {
 	RoomService domain.RoomService
 }
 
-// AddRoom handles POST /api/rooms
 func (h *RoomHandler) AddRoom(w http.ResponseWriter, r *http.Request) {
 	_, role, ok := middleware.GetUserIDRole(r.Context())
 	if !ok || role != "admin" {
@@ -44,7 +43,6 @@ func (h *RoomHandler) AddRoom(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dto.GenericResponse{Message: "room added successfully"})
 }
 
-// GetAllRooms handles GET /api/rooms
 func (h *RoomHandler) GetAllRooms(w http.ResponseWriter, r *http.Request) {
 	rooms, err := h.RoomService.GetAllRooms()
 	if err != nil {
@@ -66,7 +64,6 @@ func (h *RoomHandler) GetAllRooms(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-// GetRoomByID handles GET /api/rooms/{id}
 func (h *RoomHandler) GetRoomByID(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)

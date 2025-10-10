@@ -15,7 +15,6 @@ type BookingHandler struct {
 	BookingService domain.BookingService
 }
 
-// CreateBooking handles POST /api/bookings
 func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	userID, _, ok := middleware.GetUserIDRole(r.Context())
 	if !ok {
@@ -57,7 +56,6 @@ func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dto.GenericResponse{Message: "booking created successfully"})
 }
 
-// GetAllBookings handles GET /api/bookings
 func (h *BookingHandler) GetAllBookings(w http.ResponseWriter, r *http.Request) {
 	_, role, ok := middleware.GetUserIDRole(r.Context())
 	if !ok || role != "admin" {
@@ -86,7 +84,6 @@ func (h *BookingHandler) GetAllBookings(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(resp)
 }
 
-// CancelBooking handles DELETE /api/bookings/{id}
 func (h *BookingHandler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 	_, role, ok := middleware.GetUserIDRole(r.Context())
 	if !ok || role != "admin" {

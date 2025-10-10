@@ -13,7 +13,6 @@ type UserHandler struct {
 	UserService domain.UserService
 }
 
-// RegisterUser handles POST /api/users/register
 func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var req dto.RegisterUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -37,9 +36,7 @@ func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dto.GenericResponse{Message: "user registered successfully"})
 }
 
-// GetAllUsers handles GET /api/users
 func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	// Only admin can fetch all users
 	_, role, ok := middleware.GetUserIDRole(r.Context())
 	if !ok || role != "admin" {
 		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)

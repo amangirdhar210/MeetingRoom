@@ -22,7 +22,6 @@ func (r *RoomRepositoryMySQL) Create(room *domain.Room) error {
 		return domain.ErrInvalidInput
 	}
 
-	// ensure timestamps are set
 	now := time.Now()
 	if room.CreatedAt.IsZero() {
 		room.CreatedAt = now
@@ -40,7 +39,6 @@ func (r *RoomRepositoryMySQL) Create(room *domain.Room) error {
 		room.Name,
 		room.Capacity,
 		room.Location,
-		// map domain field IsAvailable -> DB column 'available'
 		room.IsAvailable,
 		room.CreatedAt,
 		room.UpdatedAt,
@@ -62,7 +60,6 @@ func (r *RoomRepositoryMySQL) GetAll() ([]domain.Room, error) {
 	var rooms []domain.Room
 	for rows.Next() {
 		var rm domain.Room
-		// map DB column 'available' -> domain field IsAvailable
 		err := rows.Scan(&rm.ID, &rm.Name, &rm.Capacity, &rm.Location, &rm.IsAvailable, &rm.CreatedAt, &rm.UpdatedAt)
 		if err != nil {
 			return nil, err
