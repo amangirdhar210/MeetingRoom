@@ -59,3 +59,11 @@ func (s *UserServiceImpl) GetAllUsers() ([]domain.User, error) {
 	}
 	return users, nil
 }
+
+func (s *UserServiceImpl) GetUserByID(id int64) (*domain.User, error) {
+	return s.repo.GetByID(id)
+}
+
+func (s *UserServiceImpl) DeleteUserByID(id int64) error {
+	return s.repo.DeleteByID(id)
+}

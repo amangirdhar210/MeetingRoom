@@ -7,6 +7,7 @@ type UserRepository interface {
 	FindByEmail(email string) (*User, error)
 	GetByID(id int64) (*User, error)
 	GetAll() ([]User, error)
+	DeleteByID(id int64) error
 }
 
 type RoomRepository interface {
@@ -14,6 +15,7 @@ type RoomRepository interface {
 	GetByID(id int64) (*Room, error)
 	GetAll() ([]Room, error)
 	UpdateAvailability(id int64, available bool) error
+	DeleteByID(id int64) error
 }
 
 type BookingRepository interface {
@@ -27,6 +29,8 @@ type BookingRepository interface {
 type UserService interface {
 	Register(user *User) error
 	GetAllUsers() ([]User, error)
+	GetUserByID(id int64) (*User, error)
+	DeleteUserByID(id int64) error
 }
 
 type AuthService interface {
@@ -41,6 +45,7 @@ type RoomService interface {
 	AddRoom(room *Room) error
 	GetAllRooms() ([]Room, error)
 	GetRoomByID(id int64) (*Room, error)
+	DeleteRoomByID(id int64) error
 }
 
 type BookingService interface {

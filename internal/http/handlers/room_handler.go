@@ -8,6 +8,7 @@ import (
 	"github.com/amangirdhar210/meeting-room/internal/domain"
 	"github.com/amangirdhar210/meeting-room/internal/http/dto"
 	"github.com/amangirdhar210/meeting-room/internal/http/middleware"
+	"github.com/gorilla/mux"
 )
 
 type RoomHandler struct {
@@ -87,4 +88,27 @@ func (h *RoomHandler) GetRoomByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *RoomHandler) DeleteRoomByID(w http.ResponseWriter, r *http.Request) {
+	_, role, ok := middleware.GetUserIDRole(r.Context())
+	if !ok || role != "admin" {
+		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+		return
+	}
+
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, `{"error":"invalid room id"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := h.RoomService.DeleteRoomByID(id); err != nil {
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(dto.GenericResponse{Message: "room deleted successfully"})
 }

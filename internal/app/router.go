@@ -12,9 +12,9 @@ import (
 )
 
 func SetupRouter(db *sql.DB, jwtSecret string) http.Handler {
-	userRepo := mysql.NewUserRepositoryMySQL(db)
-	roomRepo := mysql.NewRoomRepositoryMySQL(db)
-	bookingRepo := mysql.NewBookingRepositoryMySQL(db)
+	userRepo := mysql.NewUserRepositorySQLite(db)
+	roomRepo := mysql.NewRoomRepositorySQLite(db)
+	bookingRepo := mysql.NewBookingRepositorySQLite(db)
 
 	authService := service.NewAuthService(userRepo)
 	userService := service.NewUserService(userRepo, authService)
@@ -41,10 +41,12 @@ func SetupRouter(db *sql.DB, jwtSecret string) http.Handler {
 	api.Use(middleware.JWTAuthMiddleware(jwtSecret))
 
 	api.HandleFunc("/users", userHandler.GetAllUsers).Methods("GET")
+	api.HandleFunc("/users/{id:[0-9]+}", userHandler.DeleteUser).Methods("DELETE")
 
 	api.HandleFunc("/rooms", roomHandler.AddRoom).Methods("POST")
 	api.HandleFunc("/rooms", roomHandler.GetAllRooms).Methods("GET")
 	api.HandleFunc("/rooms/{id:[0-9]+}", roomHandler.GetRoomByID).Methods("GET")
+	api.HandleFunc("/rooms/{id}", roomHandler.DeleteRoomByID).Methods("DELETE")
 
 	api.HandleFunc("/bookings", bookingHandler.CreateBooking).Methods("POST")
 	api.HandleFunc("/bookings", bookingHandler.GetAllBookings).Methods("GET")

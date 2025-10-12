@@ -9,15 +9,15 @@ import (
 	"github.com/amangirdhar210/meeting-room/internal/domain"
 )
 
-type UserRepositoryMySQL struct {
+type UserRepositorySQLite struct {
 	db *sql.DB
 }
 
-func NewUserRepositoryMySQL(db *sql.DB) domain.UserRepository {
-	return &UserRepositoryMySQL{db: db}
+func NewUserRepositorySQLite(db *sql.DB) domain.UserRepository {
+	return &UserRepositorySQLite{db: db}
 }
 
-func (r *UserRepositoryMySQL) Create(user *domain.User) error {
+func (r *UserRepositorySQLite) Create(user *domain.User) error {
 	if user == nil {
 		return domain.ErrInvalidInput
 	}
@@ -35,7 +35,7 @@ func (r *UserRepositoryMySQL) Create(user *domain.User) error {
 	return err
 }
 
-func (r *UserRepositoryMySQL) FindByEmail(email string) (*domain.User, error) {
+func (r *UserRepositorySQLite) FindByEmail(email string) (*domain.User, error) {
 	query := `SELECT id, name, email, password, role, created_at, updated_at FROM users WHERE email = ? LIMIT 1`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -53,7 +53,7 @@ func (r *UserRepositoryMySQL) FindByEmail(email string) (*domain.User, error) {
 	return &u, nil
 }
 
-func (r *UserRepositoryMySQL) GetByID(id int64) (*domain.User, error) {
+func (r *UserRepositorySQLite) GetByID(id int64) (*domain.User, error) {
 	query := `SELECT id, name, email, password, role, created_at, updated_at FROM users WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -71,7 +71,7 @@ func (r *UserRepositoryMySQL) GetByID(id int64) (*domain.User, error) {
 	return &u, nil
 }
 
-func (r *UserRepositoryMySQL) GetAll() ([]domain.User, error) {
+func (r *UserRepositorySQLite) GetAll() ([]domain.User, error) {
 	query := `SELECT id, name, email, role, created_at, updated_at FROM users`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -95,4 +95,20 @@ func (r *UserRepositoryMySQL) GetAll() ([]domain.User, error) {
 		return nil, domain.ErrNotFound
 	}
 	return users, nil
+}
+
+func (r *UserRepositorySQLite) DeleteByID(id int64) error {
+	query := `DELETE FROM users WHERE id = ?`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
 }

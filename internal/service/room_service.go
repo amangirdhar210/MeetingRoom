@@ -58,3 +58,9 @@ func (s *RoomServiceImpl) GetRoomByID(id int64) (*domain.Room, error) {
 	}
 	return room, nil
 }
+func (s *RoomServiceImpl) DeleteRoomByID(id int64) error {
+	if id <= 0 {
+		return domain.ErrInvalidInput
+	}
+	return s.repo.DeleteByID(id)
+}

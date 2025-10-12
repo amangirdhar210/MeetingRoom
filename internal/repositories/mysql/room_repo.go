@@ -9,15 +9,15 @@ import (
 	"github.com/amangirdhar210/meeting-room/internal/domain"
 )
 
-type RoomRepositoryMySQL struct {
+type RoomRepositorySQLite struct {
 	db *sql.DB
 }
 
-func NewRoomRepositoryMySQL(db *sql.DB) domain.RoomRepository {
-	return &RoomRepositoryMySQL{db: db}
+func NewRoomRepositorySQLite(db *sql.DB) domain.RoomRepository {
+	return &RoomRepositorySQLite{db: db}
 }
 
-func (r *RoomRepositoryMySQL) Create(room *domain.Room) error {
+func (r *RoomRepositorySQLite) Create(room *domain.Room) error {
 	if room == nil {
 		return domain.ErrInvalidInput
 	}
@@ -46,7 +46,7 @@ func (r *RoomRepositoryMySQL) Create(room *domain.Room) error {
 	return err
 }
 
-func (r *RoomRepositoryMySQL) GetAll() ([]domain.Room, error) {
+func (r *RoomRepositorySQLite) GetAll() ([]domain.Room, error) {
 	query := `SELECT id, name, capacity, location, available, created_at, updated_at FROM rooms`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -72,7 +72,7 @@ func (r *RoomRepositoryMySQL) GetAll() ([]domain.Room, error) {
 	return rooms, nil
 }
 
-func (r *RoomRepositoryMySQL) GetByID(id int64) (*domain.Room, error) {
+func (r *RoomRepositorySQLite) GetByID(id int64) (*domain.Room, error) {
 	query := `SELECT id, name, capacity, location, available, created_at, updated_at FROM rooms WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -90,7 +90,7 @@ func (r *RoomRepositoryMySQL) GetByID(id int64) (*domain.Room, error) {
 	return &rm, nil
 }
 
-func (r *RoomRepositoryMySQL) UpdateAvailability(id int64, available bool) error {
+func (r *RoomRepositorySQLite) UpdateAvailability(id int64, available bool) error {
 	query := `UPDATE rooms SET available = ?, updated_at = ? WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -100,6 +100,29 @@ func (r *RoomRepositoryMySQL) UpdateAvailability(id int64, available bool) error
 		return err
 	}
 	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *RoomRepositorySQLite) DeleteByID(id int64) error {
+	if id <= 0 {
+		return domain.ErrInvalidInput
+	}
+
+	query := `DELETE FROM rooms WHERE id = ?`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rowsAffected == 0 {
 		return domain.ErrNotFound
 	}

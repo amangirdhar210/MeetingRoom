@@ -8,15 +8,15 @@ import (
 	"github.com/amangirdhar210/meeting-room/internal/domain"
 )
 
-type BookingRepositoryMySQL struct {
+type BookingRepositorySQLite struct {
 	db *sql.DB
 }
 
-func NewBookingRepositoryMySQL(db *sql.DB) domain.BookingRepository {
-	return &BookingRepositoryMySQL{db: db}
+func NewBookingRepositorySQLite(db *sql.DB) domain.BookingRepository {
+	return &BookingRepositorySQLite{db: db}
 }
 
-func (r *BookingRepositoryMySQL) checkAvailability(roomID int64, startTime, endTime time.Time) (bool, error) {
+func (r *BookingRepositorySQLite) checkAvailability(roomID int64, startTime, endTime time.Time) (bool, error) {
 	query := `
 		SELECT COUNT(*) 
 		FROM bookings 
@@ -34,7 +34,7 @@ func (r *BookingRepositoryMySQL) checkAvailability(roomID int64, startTime, endT
 	return count == 0, nil
 }
 
-func (r *BookingRepositoryMySQL) Create(booking *domain.Booking) error {
+func (r *BookingRepositorySQLite) Create(booking *domain.Booking) error {
 	if booking == nil {
 		return domain.ErrInvalidInput
 	}
@@ -66,7 +66,7 @@ func (r *BookingRepositoryMySQL) Create(booking *domain.Booking) error {
 	return err
 }
 
-func (r *BookingRepositoryMySQL) GetByID(id int64) (*domain.Booking, error) {
+func (r *BookingRepositorySQLite) GetByID(id int64) (*domain.Booking, error) {
 	query := `
 		SELECT id, user_id, room_id, start_time, end_time, purpose, created_at, updated_at
 		FROM bookings WHERE id = ?
@@ -87,7 +87,7 @@ func (r *BookingRepositoryMySQL) GetByID(id int64) (*domain.Booking, error) {
 	return &b, nil
 }
 
-func (r *BookingRepositoryMySQL) GetAll() ([]domain.Booking, error) {
+func (r *BookingRepositorySQLite) GetAll() ([]domain.Booking, error) {
 	query := `
 		SELECT id, user_id, room_id, start_time, end_time, purpose, created_at, updated_at 
 		FROM bookings ORDER BY start_time DESC
@@ -116,7 +116,7 @@ func (r *BookingRepositoryMySQL) GetAll() ([]domain.Booking, error) {
 	return bookings, nil
 }
 
-func (r *BookingRepositoryMySQL) GetByRoomAndTime(roomID int64, start, end time.Time) ([]domain.Booking, error) {
+func (r *BookingRepositorySQLite) GetByRoomAndTime(roomID int64, start, end time.Time) ([]domain.Booking, error) {
 	query := `
 		SELECT id, user_id, room_id, start_time, end_time, purpose, created_at, updated_at
 		FROM bookings
@@ -149,7 +149,7 @@ func (r *BookingRepositoryMySQL) GetByRoomAndTime(roomID int64, start, end time.
 	return bookings, nil
 }
 
-func (r *BookingRepositoryMySQL) Cancel(id int64) error {
+func (r *BookingRepositorySQLite) Cancel(id int64) error {
 	query := `DELETE FROM bookings WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

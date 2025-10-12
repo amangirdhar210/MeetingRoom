@@ -3,10 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/amangirdhar210/meeting-room/internal/domain"
 	"github.com/amangirdhar210/meeting-room/internal/http/dto"
 	"github.com/amangirdhar210/meeting-room/internal/http/middleware"
+	"github.com/gorilla/mux"
 )
 
 type UserHandler struct {
@@ -60,4 +62,40 @@ func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	userId, role, ok := middleware.GetUserIDRole(r.Context())
+	if !ok || role != "admin" {
+		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+		return
+	}
+
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, `{"error":"invalid user id"}`, http.StatusBadRequest)
+		return
+	}
+	if id == userId {
+		http.Error(w, `{"error":"cannot delete yourself"}`, http.StatusForbidden)
+		return
+	}
+	user, err := h.UserService.GetUserByID(id)
+	if err != nil {
+		http.Error(w, `{"error":"user not found"}`, http.StatusNotFound)
+		return
+	}
+	if user.Email == "admin@wg.com" {
+		http.Error(w, `{"error":"cannot delete superadmin"}`, http.StatusForbidden)
+		return
+	}
+
+	if err := h.UserService.DeleteUserByID(id); err != nil {
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(dto.GenericResponse{Message: "user deleted successfully"})
 }
