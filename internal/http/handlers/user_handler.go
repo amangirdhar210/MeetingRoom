@@ -16,6 +16,12 @@ type UserHandler struct {
 }
 
 func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
+	_, role, ok := middleware.GetUserIDRole(r.Context())
+	if !ok || role != "admin" {
+		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+		return
+	}
+
 	var req dto.RegisterUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)

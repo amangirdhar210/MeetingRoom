@@ -7,11 +7,14 @@ import (
 
 	"github.com/amangirdhar210/meeting-room/internal/app"
 	"github.com/amangirdhar210/meeting-room/internal/http/middleware"
+	"github.com/amangirdhar210/meeting-room/internal/pkg/jwt"
 	"github.com/amangirdhar210/meeting-room/internal/repositories/mysql"
 )
 
 func main() {
 	jwtSecret := "supersecretkey"
+
+	jwt.Init(jwtSecret)
 
 	cfg := mysql.DBConfig{
 		Path: "./meeting_room_db.sqlite",

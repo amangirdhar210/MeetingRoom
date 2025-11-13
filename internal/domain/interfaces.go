@@ -12,9 +12,9 @@ type UserRepository interface {
 
 type RoomRepository interface {
 	Create(room *Room) error
-	GetByID(id int64) (*Room, error)
 	GetAll() ([]Room, error)
-	UpdateAvailability(id int64, available bool) error
+	GetByID(id int64) (*Room, error)
+	UpdateAvailability(id int64, status string) error
 	DeleteByID(id int64) error
 }
 
@@ -23,6 +23,7 @@ type BookingRepository interface {
 	GetByID(id int64) (*Booking, error)
 	GetAll() ([]Booking, error)
 	GetByRoomAndTime(roomID int64, start, end time.Time) ([]Booking, error)
+	GetByRoomID(roomID int64) ([]Booking, error)
 	Cancel(id int64) error
 }
 
@@ -52,4 +53,5 @@ type BookingService interface {
 	CreateBooking(booking *Booking) error
 	CancelBooking(id int64) error
 	GetAllBookings() ([]Booking, error)
+	GetBookingsByRoomID(roomID int64) ([]Booking, error)
 }

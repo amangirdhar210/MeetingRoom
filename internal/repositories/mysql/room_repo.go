@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -28,18 +29,24 @@ func (r *RoomRepositorySQLite) Create(room *domain.Room) error {
 	}
 	room.UpdatedAt = now
 
+	amenitiesJson, _ := json.Marshal(room.Amenities)
+
 	query := `
-		INSERT INTO rooms (name, capacity, location, available, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO rooms (name, room_number, capacity, floor, amenities, status, location, description, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	_, err := r.db.ExecContext(ctx, query,
 		room.Name,
+		room.RoomNumber,
 		room.Capacity,
+		room.Floor,
+		string(amenitiesJson),
+		room.Status,
 		room.Location,
-		room.IsAvailable,
+		room.Description,
 		room.CreatedAt,
 		room.UpdatedAt,
 	)
@@ -47,7 +54,7 @@ func (r *RoomRepositorySQLite) Create(room *domain.Room) error {
 }
 
 func (r *RoomRepositorySQLite) GetAll() ([]domain.Room, error) {
-	query := `SELECT id, name, capacity, location, available, created_at, updated_at FROM rooms`
+	query := `SELECT id, name, room_number, capacity, floor, amenities, status, location, description, created_at, updated_at FROM rooms`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -60,9 +67,13 @@ func (r *RoomRepositorySQLite) GetAll() ([]domain.Room, error) {
 	var rooms []domain.Room
 	for rows.Next() {
 		var rm domain.Room
-		err := rows.Scan(&rm.ID, &rm.Name, &rm.Capacity, &rm.Location, &rm.IsAvailable, &rm.CreatedAt, &rm.UpdatedAt)
+		var amenitiesStr string
+		err := rows.Scan(&rm.ID, &rm.Name, &rm.RoomNumber, &rm.Capacity, &rm.Floor, &amenitiesStr, &rm.Status, &rm.Location, &rm.Description, &rm.CreatedAt, &rm.UpdatedAt)
 		if err != nil {
 			return nil, err
+		}
+		if err := json.Unmarshal([]byte(amenitiesStr), &rm.Amenities); err != nil {
+			rm.Amenities = []string{}
 		}
 		rooms = append(rooms, rm)
 	}
@@ -73,13 +84,14 @@ func (r *RoomRepositorySQLite) GetAll() ([]domain.Room, error) {
 }
 
 func (r *RoomRepositorySQLite) GetByID(id int64) (*domain.Room, error) {
-	query := `SELECT id, name, capacity, location, available, created_at, updated_at FROM rooms WHERE id = ?`
+	query := `SELECT id, name, room_number, capacity, floor, amenities, status, location, description, created_at, updated_at FROM rooms WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	var rm domain.Room
+	var amenitiesStr string
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&rm.ID, &rm.Name, &rm.Capacity, &rm.Location, &rm.IsAvailable, &rm.CreatedAt, &rm.UpdatedAt,
+		&rm.ID, &rm.Name, &rm.RoomNumber, &rm.Capacity, &rm.Floor, &amenitiesStr, &rm.Status, &rm.Location, &rm.Description, &rm.CreatedAt, &rm.UpdatedAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, domain.ErrNotFound
@@ -87,15 +99,18 @@ func (r *RoomRepositorySQLite) GetByID(id int64) (*domain.Room, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := json.Unmarshal([]byte(amenitiesStr), &rm.Amenities); err != nil {
+		rm.Amenities = []string{}
+	}
 	return &rm, nil
 }
 
-func (r *RoomRepositorySQLite) UpdateAvailability(id int64, available bool) error {
-	query := `UPDATE rooms SET available = ?, updated_at = ? WHERE id = ?`
+func (r *RoomRepositorySQLite) UpdateAvailability(id int64, status string) error {
+	query := `UPDATE rooms SET status = ?, updated_at = ? WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	result, err := r.db.ExecContext(ctx, query, available, time.Now(), id)
+	result, err := r.db.ExecContext(ctx, query, status, time.Now(), id)
 	if err != nil {
 		return err
 	}

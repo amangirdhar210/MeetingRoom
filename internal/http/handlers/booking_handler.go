@@ -9,6 +9,7 @@ import (
 	"github.com/amangirdhar210/meeting-room/internal/domain"
 	"github.com/amangirdhar210/meeting-room/internal/http/dto"
 	"github.com/amangirdhar210/meeting-room/internal/http/middleware"
+	"github.com/gorilla/mux"
 )
 
 type BookingHandler struct {
@@ -91,7 +92,8 @@ func (h *BookingHandler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	idStr := vars["id"]
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		http.Error(w, `{"error":"invalid booking id"}`, http.StatusBadRequest)
@@ -104,4 +106,40 @@ func (h *BookingHandler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(dto.GenericResponse{Message: "booking canceled successfully"})
+}
+
+func (h *BookingHandler) GetSchedule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	roomID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil || roomID <= 0 {
+		http.Error(w, `{"error":"invalid room id"}`, http.StatusBadRequest)
+		return
+	}
+
+	bookings, err := h.BookingService.GetBookingsByRoomID(roomID)
+	if err != nil {
+		if err == domain.ErrNotFound {
+			json.NewEncoder(w).Encode([]dto.BookingDTO{})
+			return
+		}
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
+
+	var resp []dto.BookingDTO
+	for _, b := range bookings {
+		resp = append(resp, dto.BookingDTO{
+			ID:        b.ID,
+			UserID:    b.UserID,
+			RoomID:    b.RoomID,
+			StartTime: b.StartTime,
+			EndTime:   b.EndTime,
+			Purpose:   b.Purpose,
+			Status:    b.Status,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }

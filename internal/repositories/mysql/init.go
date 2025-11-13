@@ -21,9 +21,13 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS rooms (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
+  room_number INTEGER NOT NULL,
   capacity INTEGER NOT NULL,
+  floor INTEGER NOT NULL,
+  amenities TEXT, -- store as JSON array string
+  status TEXT NOT NULL DEFAULT 'Available', -- "Available" or "In Use"
   location TEXT,
-  available INTEGER DEFAULT 1,
+  description TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -23,13 +23,18 @@ func (s *RoomServiceImpl) AddRoom(room *domain.Room) error {
 	room.Name = strings.TrimSpace(room.Name)
 	room.Location = strings.TrimSpace(room.Location)
 
-	if room.Name == "" || room.Capacity <= 0 || room.Location == "" {
+	if room.Name == "" || room.Capacity <= 0 || room.Location == "" || room.RoomNumber <= 0 || room.Floor < 0 {
 		return domain.ErrInvalidInput
+	}
+	if room.Status == "" {
+		room.Status = "Available"
+	}
+	if room.Amenities == nil {
+		room.Amenities = []string{}
 	}
 
 	room.CreatedAt = time.Now()
 	room.UpdatedAt = time.Now()
-	room.IsAvailable = true
 
 	return s.repo.Create(room)
 }

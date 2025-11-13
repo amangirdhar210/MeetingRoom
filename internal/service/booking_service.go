@@ -101,3 +101,18 @@ func (s *BookingServiceImpl) GetAllBookings() ([]domain.Booking, error) {
 	}
 	return bookings, nil
 }
+
+func (s *BookingServiceImpl) GetBookingsByRoomID(roomID int64) ([]domain.Booking, error) {
+	if roomID <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
+	bookings, err := s.repo.GetByRoomID(roomID)
+	if err != nil {
+		return nil, err
+	}
+	if len(bookings) == 0 {
+		return nil, domain.ErrNotFound
+	}
+	return bookings, nil
+}
