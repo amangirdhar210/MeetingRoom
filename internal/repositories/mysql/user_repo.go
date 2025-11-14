@@ -35,14 +35,14 @@ func (r *UserRepositorySQLite) Create(user *domain.User) error {
 	return err
 }
 
-func (r *UserRepositorySQLite) FindByEmail(email string) (*domain.User, error) {
+func (r *UserRepositorySQLite) FindByEmail(userEmail string) (*domain.User, error) {
 	query := `SELECT id, name, email, password, role, created_at, updated_at FROM users WHERE email = ? LIMIT 1`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	var u domain.User
-	err := r.db.QueryRowContext(ctx, query, email).Scan(
-		&u.ID, &u.Name, &u.Email, &u.Password, &u.Role, &u.CreatedAt, &u.UpdatedAt,
+	var user domain.User
+	err := r.db.QueryRowContext(ctx, query, userEmail).Scan(
+		&user.ID, &user.Name, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, domain.ErrNotFound
@@ -50,17 +50,17 @@ func (r *UserRepositorySQLite) FindByEmail(email string) (*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &u, nil
+	return &user, nil
 }
 
-func (r *UserRepositorySQLite) GetByID(id int64) (*domain.User, error) {
+func (r *UserRepositorySQLite) GetByID(userID int64) (*domain.User, error) {
 	query := `SELECT id, name, email, password, role, created_at, updated_at FROM users WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	var u domain.User
-	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&u.ID, &u.Name, &u.Email, &u.Password, &u.Role, &u.CreatedAt, &u.UpdatedAt,
+	var user domain.User
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(
+		&user.ID, &user.Name, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, domain.ErrNotFound
@@ -68,7 +68,7 @@ func (r *UserRepositorySQLite) GetByID(id int64) (*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &u, nil
+	return &user, nil
 }
 
 func (r *UserRepositorySQLite) GetAll() ([]domain.User, error) {
@@ -84,12 +84,12 @@ func (r *UserRepositorySQLite) GetAll() ([]domain.User, error) {
 
 	var users []domain.User
 	for rows.Next() {
-		var u domain.User
-		err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.CreatedAt, &u.UpdatedAt)
+		var user domain.User
+		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
-		users = append(users, u)
+		users = append(users, user)
 	}
 	if len(users) == 0 {
 		return nil, domain.ErrNotFound
@@ -97,16 +97,19 @@ func (r *UserRepositorySQLite) GetAll() ([]domain.User, error) {
 	return users, nil
 }
 
-func (r *UserRepositorySQLite) DeleteByID(id int64) error {
+func (r *UserRepositorySQLite) DeleteByID(userID int64) error {
 	query := `DELETE FROM users WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	result, err := r.db.ExecContext(ctx, query, id)
+	result, err := r.db.ExecContext(ctx, query, userID)
 	if err != nil {
 		return err
 	}
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rowsAffected == 0 {
 		return domain.ErrNotFound
 	}

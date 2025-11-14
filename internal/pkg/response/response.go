@@ -6,18 +6,18 @@ import (
 )
 
 type Response struct {
-	Success bool        `json:"success"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Data    any    `json:"data,omitempty"`
 }
 
-func JSON(w http.ResponseWriter, status int, success bool, message string, data interface{}) {
+func JSON(w http.ResponseWriter, status int, success bool, message string, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(Response{Success: success, Message: message, Data: data})
 }
 
-func Success(w http.ResponseWriter, message string, data interface{}) {
+func Success(w http.ResponseWriter, message string, data any) {
 	JSON(w, http.StatusOK, true, message, data)
 }
 

@@ -16,6 +16,7 @@ type RoomRepository interface {
 	GetByID(id int64) (*Room, error)
 	UpdateAvailability(id int64, status string) error
 	DeleteByID(id int64) error
+	SearchWithFilters(minCapacity, maxCapacity int, floor *int, amenities []string) ([]Room, error)
 }
 
 type BookingRepository interface {
@@ -25,6 +26,8 @@ type BookingRepository interface {
 	GetByRoomAndTime(roomID int64, start, end time.Time) ([]Booking, error)
 	GetByRoomID(roomID int64) ([]Booking, error)
 	Cancel(id int64) error
+	GetByDateRange(startDate, endDate time.Time) ([]Booking, error)
+	GetByRoomIDAndDate(roomID int64, date time.Time) ([]Booking, error)
 }
 
 type UserService interface {
@@ -47,11 +50,30 @@ type RoomService interface {
 	GetAllRooms() ([]Room, error)
 	GetRoomByID(id int64) (*Room, error)
 	DeleteRoomByID(id int64) error
+	SearchRooms(minCapacity, maxCapacity int, floor *int, amenities []string, startTime, endTime *time.Time) ([]Room, error)
+	CheckAvailability(roomID int64, startTime, endTime time.Time) (bool, []Booking, error)
+	GetAvailableSlots(roomID int64, date time.Time, slotDuration int) ([]TimeSlot, error)
 }
 
 type BookingService interface {
 	CreateBooking(booking *Booking) error
-	CancelBooking(id int64) error
+	CancelBooking(bookingID int64) error
 	GetAllBookings() ([]Booking, error)
 	GetBookingsByRoomID(roomID int64) ([]Booking, error)
+	GetBookingsWithDetailsByRoomID(roomID int64) ([]BookingWithDetails, error)
+	GetBookingsByDateRange(startDate, endDate time.Time) ([]Booking, error)
+}
+
+type TimeSlot struct {
+	StartTime time.Time
+	EndTime   time.Time
+	Duration  int
+}
+
+type BookingWithDetails struct {
+	Booking
+	UserName   string
+	UserEmail  string
+	RoomName   string
+	RoomNumber int
 }

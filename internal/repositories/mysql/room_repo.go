@@ -18,6 +18,31 @@ func NewRoomRepositorySQLite(db *sql.DB) domain.RoomRepository {
 	return &RoomRepositorySQLite{db: db}
 }
 
+func (r *RoomRepositorySQLite) scanRoom(rows *sql.Rows) (domain.Room, error) {
+	var room domain.Room
+	var amenitiesJSON string
+	err := rows.Scan(&room.ID, &room.Name, &room.RoomNumber, &room.Capacity, &room.Floor, &amenitiesJSON, &room.Status, &room.Location, &room.Description, &room.CreatedAt, &room.UpdatedAt)
+	if err != nil {
+		return room, err
+	}
+	if err := json.Unmarshal([]byte(amenitiesJSON), &room.Amenities); err != nil {
+		room.Amenities = []string{}
+	}
+	return room, nil
+}
+
+func (r *RoomRepositorySQLite) scanRooms(rows *sql.Rows) ([]domain.Room, error) {
+	var rooms []domain.Room
+	for rows.Next() {
+		room, err := r.scanRoom(rows)
+		if err != nil {
+			return nil, err
+		}
+		rooms = append(rooms, room)
+	}
+	return rooms, nil
+}
+
 func (r *RoomRepositorySQLite) Create(room *domain.Room) error {
 	if room == nil {
 		return domain.ErrInvalidInput
@@ -29,7 +54,10 @@ func (r *RoomRepositorySQLite) Create(room *domain.Room) error {
 	}
 	room.UpdatedAt = now
 
-	amenitiesJson, _ := json.Marshal(room.Amenities)
+	amenitiesJson, err := json.Marshal(room.Amenities)
+	if err != nil {
+		return err
+	}
 
 	query := `
 		INSERT INTO rooms (name, room_number, capacity, floor, amenities, status, location, description, created_at, updated_at)
@@ -38,7 +66,7 @@ func (r *RoomRepositorySQLite) Create(room *domain.Room) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, execErr := r.db.ExecContext(ctx, query,
 		room.Name,
 		room.RoomNumber,
 		room.Capacity,
@@ -50,7 +78,7 @@ func (r *RoomRepositorySQLite) Create(room *domain.Room) error {
 		room.CreatedAt,
 		room.UpdatedAt,
 	)
-	return err
+	return execErr
 }
 
 func (r *RoomRepositorySQLite) GetAll() ([]domain.Room, error) {
@@ -64,18 +92,9 @@ func (r *RoomRepositorySQLite) GetAll() ([]domain.Room, error) {
 	}
 	defer rows.Close()
 
-	var rooms []domain.Room
-	for rows.Next() {
-		var rm domain.Room
-		var amenitiesStr string
-		err := rows.Scan(&rm.ID, &rm.Name, &rm.RoomNumber, &rm.Capacity, &rm.Floor, &amenitiesStr, &rm.Status, &rm.Location, &rm.Description, &rm.CreatedAt, &rm.UpdatedAt)
-		if err != nil {
-			return nil, err
-		}
-		if err := json.Unmarshal([]byte(amenitiesStr), &rm.Amenities); err != nil {
-			rm.Amenities = []string{}
-		}
-		rooms = append(rooms, rm)
+	rooms, err := r.scanRooms(rows)
+	if err != nil {
+		return nil, err
 	}
 	if len(rooms) == 0 {
 		return nil, domain.ErrNotFound
@@ -83,15 +102,15 @@ func (r *RoomRepositorySQLite) GetAll() ([]domain.Room, error) {
 	return rooms, nil
 }
 
-func (r *RoomRepositorySQLite) GetByID(id int64) (*domain.Room, error) {
+func (r *RoomRepositorySQLite) GetByID(roomID int64) (*domain.Room, error) {
 	query := `SELECT id, name, room_number, capacity, floor, amenities, status, location, description, created_at, updated_at FROM rooms WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	var rm domain.Room
-	var amenitiesStr string
-	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&rm.ID, &rm.Name, &rm.RoomNumber, &rm.Capacity, &rm.Floor, &amenitiesStr, &rm.Status, &rm.Location, &rm.Description, &rm.CreatedAt, &rm.UpdatedAt,
+	var room domain.Room
+	var amenitiesJSON string
+	err := r.db.QueryRowContext(ctx, query, roomID).Scan(
+		&room.ID, &room.Name, &room.RoomNumber, &room.Capacity, &room.Floor, &amenitiesJSON, &room.Status, &room.Location, &room.Description, &room.CreatedAt, &room.UpdatedAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, domain.ErrNotFound
@@ -99,38 +118,18 @@ func (r *RoomRepositorySQLite) GetByID(id int64) (*domain.Room, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal([]byte(amenitiesStr), &rm.Amenities); err != nil {
-		rm.Amenities = []string{}
+	if err := json.Unmarshal([]byte(amenitiesJSON), &room.Amenities); err != nil {
+		room.Amenities = []string{}
 	}
-	return &rm, nil
+	return &room, nil
 }
 
-func (r *RoomRepositorySQLite) UpdateAvailability(id int64, status string) error {
+func (r *RoomRepositorySQLite) UpdateAvailability(roomID int64, roomStatus string) error {
 	query := `UPDATE rooms SET status = ?, updated_at = ? WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	result, err := r.db.ExecContext(ctx, query, status, time.Now(), id)
-	if err != nil {
-		return err
-	}
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-	return nil
-}
-
-func (r *RoomRepositorySQLite) DeleteByID(id int64) error {
-	if id <= 0 {
-		return domain.ErrInvalidInput
-	}
-
-	query := `DELETE FROM rooms WHERE id = ?`
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	result, err := r.db.ExecContext(ctx, query, id)
+	result, err := r.db.ExecContext(ctx, query, roomStatus, time.Now(), roomID)
 	if err != nil {
 		return err
 	}
@@ -142,4 +141,89 @@ func (r *RoomRepositorySQLite) DeleteByID(id int64) error {
 		return domain.ErrNotFound
 	}
 	return nil
+}
+
+func (r *RoomRepositorySQLite) DeleteByID(roomID int64) error {
+	if roomID <= 0 {
+		return domain.ErrInvalidInput
+	}
+
+	query := `DELETE FROM rooms WHERE id = ?`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := r.db.ExecContext(ctx, query, roomID)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *RoomRepositorySQLite) SearchWithFilters(minCapacity, maxCapacity int, floorNumber *int, requestedAmenities []string) ([]domain.Room, error) {
+	query := `SELECT id, name, room_number, capacity, floor, amenities, status, location, description, created_at, updated_at FROM rooms WHERE 1=1`
+	queryArgs := []any{}
+
+	if minCapacity > 0 {
+		query += ` AND capacity >= ?`
+		queryArgs = append(queryArgs, minCapacity)
+	}
+	if maxCapacity > 0 {
+		query += ` AND capacity <= ?`
+		queryArgs = append(queryArgs, maxCapacity)
+	}
+	if floorNumber != nil {
+		query += ` AND floor = ?`
+		queryArgs = append(queryArgs, *floorNumber)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := r.db.QueryContext(ctx, query, queryArgs...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var rooms []domain.Room
+	for rows.Next() {
+		room, err := r.scanRoom(rows)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(requestedAmenities) > 0 {
+			hasAllAmenities := true
+			for _, requestedAmenity := range requestedAmenities {
+				found := false
+				for _, roomAmenity := range room.Amenities {
+					if roomAmenity == requestedAmenity {
+						found = true
+						break
+					}
+				}
+				if !found {
+					hasAllAmenities = false
+					break
+				}
+			}
+			if !hasAllAmenities {
+				continue
+			}
+		}
+
+		rooms = append(rooms, room)
+	}
+
+	if len(rooms) == 0 {
+		return []domain.Room{}, nil
+	}
+	return rooms, nil
 }

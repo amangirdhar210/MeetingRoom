@@ -69,3 +69,37 @@ func (s *RoomServiceImpl) DeleteRoomByID(id int64) error {
 	}
 	return s.repo.DeleteByID(id)
 }
+
+func (s *RoomServiceImpl) SearchRooms(minCapacity, maxCapacity int, floor *int, amenities []string, startTime, endTime *time.Time) ([]domain.Room, error) {
+	rooms, err := s.repo.SearchWithFilters(minCapacity, maxCapacity, floor, amenities)
+	if err != nil {
+		return nil, err
+	}
+	return rooms, nil
+}
+
+func (s *RoomServiceImpl) CheckAvailability(roomID int64, startTime, endTime time.Time) (bool, []domain.Booking, error) {
+	if roomID <= 0 {
+		return false, nil, domain.ErrInvalidInput
+	}
+
+	_, err := s.repo.GetByID(roomID)
+	if err != nil {
+		return false, nil, err
+	}
+
+	return true, []domain.Booking{}, nil
+}
+
+func (s *RoomServiceImpl) GetAvailableSlots(roomID int64, date time.Time, slotDuration int) ([]domain.TimeSlot, error) {
+	if roomID <= 0 || slotDuration <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
+	_, err := s.repo.GetByID(roomID)
+	if err != nil {
+		return nil, err
+	}
+
+	return []domain.TimeSlot{}, nil
+}

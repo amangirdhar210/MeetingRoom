@@ -66,12 +66,12 @@ func (s *BookingServiceImpl) CreateBooking(booking *domain.Booking) error {
 	return s.repo.Create(booking)
 }
 
-func (s *BookingServiceImpl) CancelBooking(id int64) error {
-	if id <= 0 {
+func (s *BookingServiceImpl) CancelBooking(bookingID int64) error {
+	if bookingID <= 0 {
 		return domain.ErrInvalidInput
 	}
 
-	booking, err := s.repo.GetByID(id)
+	booking, err := s.repo.GetByID(bookingID)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (s *BookingServiceImpl) CancelBooking(id int64) error {
 		return domain.ErrConflict
 	}
 
-	err = s.repo.Cancel(id)
+	err = s.repo.Cancel(bookingID)
 	if err != nil {
 		return err
 	}
@@ -113,6 +113,51 @@ func (s *BookingServiceImpl) GetBookingsByRoomID(roomID int64) ([]domain.Booking
 	}
 	if len(bookings) == 0 {
 		return nil, domain.ErrNotFound
+	}
+	return bookings, nil
+}
+
+func (s *BookingServiceImpl) GetBookingsWithDetailsByRoomID(roomID int64) ([]domain.BookingWithDetails, error) {
+	if roomID <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
+	bookings, err := s.repo.GetByRoomID(roomID)
+	if err != nil {
+		return nil, err
+	}
+
+	room, err := s.roomRepo.GetByID(roomID)
+	if err != nil {
+		return nil, err
+	}
+
+	var detailedBookings []domain.BookingWithDetails
+	for _, booking := range bookings {
+		user, err := s.userRepo.GetByID(booking.UserID)
+		if err != nil {
+			continue
+		}
+
+		detailedBookings = append(detailedBookings, domain.BookingWithDetails{
+			Booking:    booking,
+			UserName:   user.Name,
+			UserEmail:  user.Email,
+			RoomName:   room.Name,
+			RoomNumber: room.RoomNumber,
+		})
+	}
+
+	if len(detailedBookings) == 0 {
+		return []domain.BookingWithDetails{}, nil
+	}
+	return detailedBookings, nil
+}
+
+func (s *BookingServiceImpl) GetBookingsByDateRange(startDate, endDate time.Time) ([]domain.Booking, error) {
+	bookings, err := s.repo.GetByDateRange(startDate, endDate)
+	if err != nil {
+		return nil, err
 	}
 	return bookings, nil
 }

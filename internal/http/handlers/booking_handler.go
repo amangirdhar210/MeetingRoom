@@ -110,36 +110,42 @@ func (h *BookingHandler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 
 func (h *BookingHandler) GetSchedule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	idStr := vars["id"]
-	roomID, err := strconv.ParseInt(idStr, 10, 64)
+	roomIDStr := vars["id"]
+	roomID, err := strconv.ParseInt(roomIDStr, 10, 64)
 	if err != nil || roomID <= 0 {
 		http.Error(w, `{"error":"invalid room id"}`, http.StatusBadRequest)
 		return
 	}
 
-	bookings, err := h.BookingService.GetBookingsByRoomID(roomID)
+	detailedBookings, err := h.BookingService.GetBookingsWithDetailsByRoomID(roomID)
 	if err != nil {
 		if err == domain.ErrNotFound {
-			json.NewEncoder(w).Encode([]dto.BookingDTO{})
+			json.NewEncoder(w).Encode([]dto.DetailedBookingDTO{})
 			return
 		}
 		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
 		return
 	}
 
-	var resp []dto.BookingDTO
-	for _, b := range bookings {
-		resp = append(resp, dto.BookingDTO{
-			ID:        b.ID,
-			UserID:    b.UserID,
-			RoomID:    b.RoomID,
-			StartTime: b.StartTime,
-			EndTime:   b.EndTime,
-			Purpose:   b.Purpose,
-			Status:    b.Status,
+	var response []dto.DetailedBookingDTO
+	for _, booking := range detailedBookings {
+		durationMinutes := int(booking.EndTime.Sub(booking.StartTime).Minutes())
+		response = append(response, dto.DetailedBookingDTO{
+			ID:         booking.ID,
+			UserID:     booking.UserID,
+			UserName:   booking.UserName,
+			UserEmail:  booking.UserEmail,
+			RoomID:     booking.RoomID,
+			RoomName:   booking.RoomName,
+			RoomNumber: booking.RoomNumber,
+			StartTime:  booking.StartTime,
+			EndTime:    booking.EndTime,
+			Duration:   durationMinutes,
+			Purpose:    booking.Purpose,
+			Status:     booking.Status,
 		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	json.NewEncoder(w).Encode(response)
 }

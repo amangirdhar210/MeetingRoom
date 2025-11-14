@@ -33,7 +33,10 @@ func (s *UserServiceImpl) Register(user *domain.User) error {
 		return domain.ErrInvalidInput
 	}
 
-	existing, _ := s.repo.FindByEmail(user.Email)
+	existing, err := s.repo.FindByEmail(user.Email)
+	if err != nil && err != domain.ErrNotFound {
+		return err
+	}
 	if existing != nil {
 		return domain.ErrConflict
 	}

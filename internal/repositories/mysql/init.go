@@ -3,6 +3,8 @@ package mysql
 import (
 	"database/sql"
 	"log"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const schema = `
@@ -58,9 +60,15 @@ func InitSQLite(db *sql.DB) error {
 		return err
 	}
 	if count == 0 {
-		_, err := db.Exec(
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+		if err != nil {
+			log.Printf("Failed to hash admin password: %v", err)
+			return err
+		}
+
+		_, err = db.Exec(
 			`INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`,
-			"Admin", "admin@example.com", "admin123", "admin",
+			"Admin", "admin@example.com", string(hashedPassword), "admin",
 		)
 		if err != nil {
 			log.Printf("Failed to seed admin user: %v", err)
