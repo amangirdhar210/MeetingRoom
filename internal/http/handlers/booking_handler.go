@@ -58,14 +58,26 @@ func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BookingHandler) GetAllBookings(w http.ResponseWriter, r *http.Request) {
-	_, role, ok := middleware.GetUserIDRole(r.Context())
-	if !ok || role != "admin" {
-		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+	userID, role, ok := middleware.GetUserIDRole(r.Context())
+	if !ok {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 		return
 	}
 
-	bookings, err := h.BookingService.GetAllBookings()
+	var bookings []domain.Booking
+	var err error
+
+	if role == "admin" {
+		bookings, err = h.BookingService.GetAllBookings()
+	} else {
+		bookings, err = h.BookingService.GetBookingsByUserID(userID)
+	}
+
 	if err != nil {
+		if err == domain.ErrNotFound {
+			json.NewEncoder(w).Encode([]dto.BookingDTO{})
+			return
+		}
 		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
 		return
 	}
@@ -82,30 +94,80 @@ func (h *BookingHandler) GetAllBookings(w http.ResponseWriter, r *http.Request) 
 		})
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *BookingHandler) CancelBooking(w http.ResponseWriter, r *http.Request) {
-	_, role, ok := middleware.GetUserIDRole(r.Context())
-	if !ok || role != "admin" {
-		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+	userID, role, ok := middleware.GetUserIDRole(r.Context())
+	if !ok {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 		return
 	}
 
 	vars := mux.Vars(r)
 	idStr := vars["id"]
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	bookingID, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		http.Error(w, `{"error":"invalid booking id"}`, http.StatusBadRequest)
 		return
 	}
 
-	if err := h.BookingService.CancelBooking(id); err != nil {
+	if role != "admin" {
+		booking, err := h.BookingService.GetBookingByID(bookingID)
+		if err != nil {
+			if err == domain.ErrNotFound {
+				http.Error(w, `{"error":"booking not found"}`, http.StatusNotFound)
+			} else {
+				http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+			}
+			return
+		}
+		if booking.UserID != userID {
+			http.Error(w, `{"error":"forbidden: you can only cancel your own bookings"}`, http.StatusForbidden)
+			return
+		}
+	}
+
+	if err := h.BookingService.CancelBooking(bookingID); err != nil {
 		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusNotFound)
 		return
 	}
 
 	json.NewEncoder(w).Encode(dto.GenericResponse{Message: "booking canceled successfully"})
+}
+
+func (h *BookingHandler) GetMyBookings(w http.ResponseWriter, r *http.Request) {
+	userID, _, ok := middleware.GetUserIDRole(r.Context())
+	if !ok {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	bookings, err := h.BookingService.GetBookingsByUserID(userID)
+	if err != nil {
+		if err == domain.ErrNotFound {
+			json.NewEncoder(w).Encode([]dto.BookingDTO{})
+			return
+		}
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
+
+	var resp []dto.BookingDTO
+	for _, b := range bookings {
+		resp = append(resp, dto.BookingDTO{
+			ID:        b.ID,
+			UserID:    b.UserID,
+			RoomID:    b.RoomID,
+			StartTime: b.StartTime,
+			EndTime:   b.EndTime,
+			Purpose:   b.Purpose,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *BookingHandler) GetSchedule(w http.ResponseWriter, r *http.Request) {

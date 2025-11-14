@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS rooms (
   room_number INTEGER NOT NULL,
   capacity INTEGER NOT NULL,
   floor INTEGER NOT NULL,
-  amenities TEXT, -- store as JSON array string
-  status TEXT NOT NULL DEFAULT 'Available', -- "Available" or "In Use"
+  amenities TEXT,
+  status TEXT NOT NULL DEFAULT 'Available',
   location TEXT,
   description TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

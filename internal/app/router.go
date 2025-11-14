@@ -54,6 +54,7 @@ func SetupRouter(db *sql.DB, jwtSecret string) http.Handler {
 
 	api.HandleFunc("/bookings", bookingHandler.CreateBooking).Methods("POST")
 	api.HandleFunc("/bookings", bookingHandler.GetAllBookings).Methods("GET")
+	api.HandleFunc("/bookings/my", bookingHandler.GetMyBookings).Methods("GET")
 	api.HandleFunc("/bookings/{id:[0-9]+}", bookingHandler.CancelBooking).Methods("DELETE")
 
 	return r

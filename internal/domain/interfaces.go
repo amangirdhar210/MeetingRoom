@@ -25,6 +25,7 @@ type BookingRepository interface {
 	GetAll() ([]Booking, error)
 	GetByRoomAndTime(roomID int64, start, end time.Time) ([]Booking, error)
 	GetByRoomID(roomID int64) ([]Booking, error)
+	GetByUserID(userID int64) ([]Booking, error)
 	Cancel(id int64) error
 	GetByDateRange(startDate, endDate time.Time) ([]Booking, error)
 	GetByRoomIDAndDate(roomID int64, date time.Time) ([]Booking, error)
@@ -57,9 +58,11 @@ type RoomService interface {
 
 type BookingService interface {
 	CreateBooking(booking *Booking) error
+	GetBookingByID(bookingID int64) (*Booking, error)
 	CancelBooking(bookingID int64) error
 	GetAllBookings() ([]Booking, error)
 	GetBookingsByRoomID(roomID int64) ([]Booking, error)
+	GetBookingsByUserID(userID int64) ([]Booking, error)
 	GetBookingsWithDetailsByRoomID(roomID int64) ([]BookingWithDetails, error)
 	GetBookingsByDateRange(startDate, endDate time.Time) ([]Booking, error)
 }

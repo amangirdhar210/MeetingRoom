@@ -151,9 +151,6 @@ func (r *BookingRepositorySQLite) GetByRoomAndTime(roomID int64, startTime, endT
 	if err != nil {
 		return nil, err
 	}
-	if len(bookings) == 0 {
-		return nil, domain.ErrNotFound
-	}
 	return bookings, nil
 }
 
@@ -177,8 +174,28 @@ func (r *BookingRepositorySQLite) GetByRoomID(roomID int64) ([]domain.Booking, e
 	if err != nil {
 		return nil, err
 	}
-	if len(bookings) == 0 {
-		return nil, domain.ErrNotFound
+	return bookings, nil
+}
+
+func (r *BookingRepositorySQLite) GetByUserID(userID int64) ([]domain.Booking, error) {
+	query := `
+		SELECT id, user_id, room_id, start_time, end_time, purpose, created_at, updated_at
+		FROM bookings
+		WHERE user_id = ?
+		ORDER BY start_time DESC
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	bookings, err := r.scanBookings(rows)
+	if err != nil {
+		return nil, err
 	}
 	return bookings, nil
 }

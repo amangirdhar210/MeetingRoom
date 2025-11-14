@@ -53,6 +53,7 @@ func (s *BookingServiceImpl) CreateBooking(booking *domain.Booking) error {
 	if err != nil {
 		return err
 	}
+
 	for _, b := range existingBookings {
 		if utils.Overlaps(booking.StartTime, booking.EndTime, b.StartTime, b.EndTime) {
 			return domain.ErrRoomUnavailable
@@ -63,7 +64,28 @@ func (s *BookingServiceImpl) CreateBooking(booking *domain.Booking) error {
 	booking.CreatedAt = time.Now()
 	booking.UpdatedAt = time.Now()
 
-	return s.repo.Create(booking)
+	err = s.repo.Create(booking)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *BookingServiceImpl) GetBookingByID(bookingID int64) (*domain.Booking, error) {
+	if bookingID <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
+	booking, err := s.repo.GetByID(bookingID)
+	if err != nil {
+		return nil, err
+	}
+	if booking == nil {
+		return nil, domain.ErrNotFound
+	}
+
+	return booking, nil
 }
 
 func (s *BookingServiceImpl) CancelBooking(bookingID int64) error {
@@ -111,9 +133,6 @@ func (s *BookingServiceImpl) GetBookingsByRoomID(roomID int64) ([]domain.Booking
 	if err != nil {
 		return nil, err
 	}
-	if len(bookings) == 0 {
-		return nil, domain.ErrNotFound
-	}
 	return bookings, nil
 }
 
@@ -148,10 +167,19 @@ func (s *BookingServiceImpl) GetBookingsWithDetailsByRoomID(roomID int64) ([]dom
 		})
 	}
 
-	if len(detailedBookings) == 0 {
-		return []domain.BookingWithDetails{}, nil
-	}
 	return detailedBookings, nil
+}
+
+func (s *BookingServiceImpl) GetBookingsByUserID(userID int64) ([]domain.Booking, error) {
+	if userID <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
+	bookings, err := s.repo.GetByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return bookings, nil
 }
 
 func (s *BookingServiceImpl) GetBookingsByDateRange(startDate, endDate time.Time) ([]domain.Booking, error) {
