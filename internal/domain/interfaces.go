@@ -65,6 +65,7 @@ type BookingService interface {
 	GetBookingsByUserID(userID int64) ([]Booking, error)
 	GetBookingsWithDetailsByRoomID(roomID int64) ([]BookingWithDetails, error)
 	GetBookingsByDateRange(startDate, endDate time.Time) ([]Booking, error)
+	GetRoomScheduleByDate(roomID int64, date time.Time) (*RoomScheduleResponse, error)
 }
 
 type TimeSlot struct {
@@ -79,4 +80,21 @@ type BookingWithDetails struct {
 	UserEmail  string
 	RoomName   string
 	RoomNumber int
+}
+
+type ScheduleSlot struct {
+	StartTime string `json:"startTime"`
+	EndTime   string `json:"endTime"`
+	IsBooked  bool   `json:"isBooked"`
+	BookingID *int64 `json:"bookingId,omitempty"`
+	UserName  string `json:"userName,omitempty"`
+	Purpose   string `json:"purpose,omitempty"`
+}
+
+type RoomScheduleResponse struct {
+	RoomID     int64          `json:"roomId"`
+	RoomName   string         `json:"roomName"`
+	RoomNumber int            `json:"roomNumber"`
+	Date       string         `json:"date"`
+	Bookings   []ScheduleSlot `json:"bookings"`
 }

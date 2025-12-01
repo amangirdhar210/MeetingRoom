@@ -51,6 +51,7 @@ func SetupRouter(db *sql.DB, jwtSecret string) http.Handler {
 	api.HandleFunc("/rooms/{id:[0-9]+}", roomHandler.GetRoomByID).Methods("GET")
 	api.HandleFunc("/rooms/{id}", roomHandler.DeleteRoomByID).Methods("DELETE")
 	api.HandleFunc("/rooms/{id:[0-9]+}/schedule", bookingHandler.GetSchedule).Methods("GET")
+	api.HandleFunc("/rooms/{id:[0-9]+}/schedule/date", bookingHandler.GetScheduleByDate).Methods("GET")
 
 	api.HandleFunc("/bookings", bookingHandler.CreateBooking).Methods("POST")
 	api.HandleFunc("/bookings", bookingHandler.GetAllBookings).Methods("GET")

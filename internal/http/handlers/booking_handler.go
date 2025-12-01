@@ -211,3 +211,38 @@ func (h *BookingHandler) GetSchedule(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+func (h *BookingHandler) GetScheduleByDate(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	roomIDStr := vars["id"]
+	roomID, err := strconv.ParseInt(roomIDStr, 10, 64)
+	if err != nil || roomID <= 0 {
+		http.Error(w, `{"error":"invalid room id"}`, http.StatusBadRequest)
+		return
+	}
+
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		http.Error(w, `{"error":"date parameter is required (format: YYYY-MM-DD)"}`, http.StatusBadRequest)
+		return
+	}
+
+	targetDate, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		http.Error(w, `{"error":"invalid date format, use YYYY-MM-DD"}`, http.StatusBadRequest)
+		return
+	}
+
+	schedule, err := h.BookingService.GetRoomScheduleByDate(roomID, targetDate)
+	if err != nil {
+		if err == domain.ErrNotFound {
+			http.Error(w, `{"error":"room not found"}`, http.StatusNotFound)
+			return
+		}
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(schedule)
+}

@@ -189,3 +189,50 @@ func (s *BookingServiceImpl) GetBookingsByDateRange(startDate, endDate time.Time
 	}
 	return bookings, nil
 }
+
+func (s *BookingServiceImpl) GetRoomScheduleByDate(roomID int64, targetDate time.Time) (*domain.RoomScheduleResponse, error) {
+	if roomID <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
+	room, err := s.roomRepo.GetByID(roomID)
+	if err != nil {
+		return nil, err
+	}
+	if room == nil {
+		return nil, domain.ErrNotFound
+	}
+
+	bookings, err := s.repo.GetByRoomIDAndDate(roomID, targetDate)
+	if err != nil {
+		return nil, err
+	}
+
+	var scheduleSlots []domain.ScheduleSlot
+	for _, booking := range bookings {
+		user, err := s.userRepo.GetByID(booking.UserID)
+		userName := ""
+		if err == nil && user != nil {
+			userName = user.Name
+		}
+
+		scheduleSlots = append(scheduleSlots, domain.ScheduleSlot{
+			StartTime: booking.StartTime.Format(time.RFC3339),
+			EndTime:   booking.EndTime.Format(time.RFC3339),
+			IsBooked:  true,
+			BookingID: &booking.ID,
+			UserName:  userName,
+			Purpose:   booking.Purpose,
+		})
+	}
+
+	response := &domain.RoomScheduleResponse{
+		RoomID:     room.ID,
+		RoomName:   room.Name,
+		RoomNumber: room.RoomNumber,
+		Date:       targetDate.Format("2006-01-02"),
+		Bookings:   scheduleSlots,
+	}
+
+	return response, nil
+}
