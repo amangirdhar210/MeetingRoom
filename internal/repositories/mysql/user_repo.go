@@ -23,14 +23,14 @@ func (r *UserRepositorySQLite) Create(user *domain.User) error {
 	}
 
 	query := `
-		INSERT INTO users (name, email, password, role, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO users (id, name, email, password, role, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	_, err := r.db.ExecContext(ctx, query,
-		user.Name, user.Email, user.Password, user.Role, time.Now(), time.Now(),
+		user.ID, user.Name, user.Email, user.Password, user.Role, time.Now(), time.Now(),
 	)
 	return err
 }
@@ -53,7 +53,7 @@ func (r *UserRepositorySQLite) FindByEmail(userEmail string) (*domain.User, erro
 	return &user, nil
 }
 
-func (r *UserRepositorySQLite) GetByID(userID int64) (*domain.User, error) {
+func (r *UserRepositorySQLite) GetByID(userID string) (*domain.User, error) {
 	query := `SELECT id, name, email, password, role, created_at, updated_at FROM users WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -97,7 +97,7 @@ func (r *UserRepositorySQLite) GetAll() ([]domain.User, error) {
 	return users, nil
 }
 
-func (r *UserRepositorySQLite) DeleteByID(userID int64) error {
+func (r *UserRepositorySQLite) DeleteByID(userID string) error {
 	query := `DELETE FROM users WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

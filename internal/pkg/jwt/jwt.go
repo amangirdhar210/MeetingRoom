@@ -13,12 +13,12 @@ func Init(secret string) {
 }
 
 type Claims struct {
-	UserID int64  `json:"user_id"`
+	UserID string `json:"user_id"`
 	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(userID int64, role string) (string, error) {
+func GenerateToken(userID string, role string) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID: userID,

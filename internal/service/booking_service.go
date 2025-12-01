@@ -5,6 +5,7 @@ import (
 
 	"github.com/amangirdhar210/meeting-room/internal/domain"
 	"github.com/amangirdhar210/meeting-room/internal/pkg/utils"
+	"github.com/google/uuid"
 )
 
 type BookingServiceImpl struct {
@@ -26,7 +27,7 @@ func (s *BookingServiceImpl) CreateBooking(booking *domain.Booking) error {
 		return domain.ErrInvalidInput
 	}
 
-	if booking.UserID <= 0 || booking.RoomID <= 0 {
+	if booking.UserID == "" || booking.RoomID == "" {
 		return domain.ErrInvalidInput
 	}
 	if !utils.IsTimeRangeValid(booking.StartTime, booking.EndTime) {
@@ -60,6 +61,7 @@ func (s *BookingServiceImpl) CreateBooking(booking *domain.Booking) error {
 		}
 	}
 
+	booking.ID = uuid.New().String()
 	booking.Status = "confirmed"
 	booking.CreatedAt = time.Now()
 	booking.UpdatedAt = time.Now()
@@ -72,8 +74,8 @@ func (s *BookingServiceImpl) CreateBooking(booking *domain.Booking) error {
 	return nil
 }
 
-func (s *BookingServiceImpl) GetBookingByID(bookingID int64) (*domain.Booking, error) {
-	if bookingID <= 0 {
+func (s *BookingServiceImpl) GetBookingByID(bookingID string) (*domain.Booking, error) {
+	if bookingID == "" {
 		return nil, domain.ErrInvalidInput
 	}
 
@@ -88,8 +90,8 @@ func (s *BookingServiceImpl) GetBookingByID(bookingID int64) (*domain.Booking, e
 	return booking, nil
 }
 
-func (s *BookingServiceImpl) CancelBooking(bookingID int64) error {
-	if bookingID <= 0 {
+func (s *BookingServiceImpl) CancelBooking(bookingID string) error {
+	if bookingID == "" {
 		return domain.ErrInvalidInput
 	}
 
@@ -124,8 +126,8 @@ func (s *BookingServiceImpl) GetAllBookings() ([]domain.Booking, error) {
 	return bookings, nil
 }
 
-func (s *BookingServiceImpl) GetBookingsByRoomID(roomID int64) ([]domain.Booking, error) {
-	if roomID <= 0 {
+func (s *BookingServiceImpl) GetBookingsByRoomID(roomID string) ([]domain.Booking, error) {
+	if roomID == "" {
 		return nil, domain.ErrInvalidInput
 	}
 
@@ -136,8 +138,8 @@ func (s *BookingServiceImpl) GetBookingsByRoomID(roomID int64) ([]domain.Booking
 	return bookings, nil
 }
 
-func (s *BookingServiceImpl) GetBookingsWithDetailsByRoomID(roomID int64) ([]domain.BookingWithDetails, error) {
-	if roomID <= 0 {
+func (s *BookingServiceImpl) GetBookingsWithDetailsByRoomID(roomID string) ([]domain.BookingWithDetails, error) {
+	if roomID == "" {
 		return nil, domain.ErrInvalidInput
 	}
 
@@ -170,8 +172,8 @@ func (s *BookingServiceImpl) GetBookingsWithDetailsByRoomID(roomID int64) ([]dom
 	return detailedBookings, nil
 }
 
-func (s *BookingServiceImpl) GetBookingsByUserID(userID int64) ([]domain.Booking, error) {
-	if userID <= 0 {
+func (s *BookingServiceImpl) GetBookingsByUserID(userID string) ([]domain.Booking, error) {
+	if userID == "" {
 		return nil, domain.ErrInvalidInput
 	}
 
@@ -190,8 +192,8 @@ func (s *BookingServiceImpl) GetBookingsByDateRange(startDate, endDate time.Time
 	return bookings, nil
 }
 
-func (s *BookingServiceImpl) GetRoomScheduleByDate(roomID int64, targetDate time.Time) (*domain.RoomScheduleResponse, error) {
-	if roomID <= 0 {
+func (s *BookingServiceImpl) GetRoomScheduleByDate(roomID string, targetDate time.Time) (*domain.RoomScheduleResponse, error) {
+	if roomID == "" {
 		return nil, domain.ErrInvalidInput
 	}
 

@@ -40,7 +40,7 @@ func SetupRouter(db *sql.DB, jwtSecret string) http.Handler {
 	api.Use(middleware.JWTAuthMiddleware(jwtSecret))
 
 	api.HandleFunc("/users", userHandler.GetAllUsers).Methods("GET")
-	api.HandleFunc("/users/{id:[0-9]+}", userHandler.DeleteUser).Methods("DELETE")
+	api.HandleFunc("/users/{id}", userHandler.DeleteUser).Methods("DELETE")
 
 	api.HandleFunc("/register", userHandler.RegisterUser).Methods("POST")
 
@@ -48,15 +48,15 @@ func SetupRouter(db *sql.DB, jwtSecret string) http.Handler {
 	api.HandleFunc("/rooms", roomHandler.GetAllRooms).Methods("GET")
 	api.HandleFunc("/rooms/search", roomHandler.SearchRooms).Methods("GET")
 	api.HandleFunc("/rooms/check-availability", roomHandler.CheckAvailability).Methods("POST")
-	api.HandleFunc("/rooms/{id:[0-9]+}", roomHandler.GetRoomByID).Methods("GET")
-	api.HandleFunc("/rooms/{id}", roomHandler.DeleteRoomByID).Methods("DELETE")
-	api.HandleFunc("/rooms/{id:[0-9]+}/schedule", bookingHandler.GetSchedule).Methods("GET")
-	api.HandleFunc("/rooms/{id:[0-9]+}/schedule/date", bookingHandler.GetScheduleByDate).Methods("GET")
+	api.HandleFunc("/rooms/{id}", roomHandler.GetRoomByID).Methods("GET")
+	api.HandleFunc("/rooms/{id}/delete", roomHandler.DeleteRoomByID).Methods("DELETE")
+	api.HandleFunc("/rooms/{id}/schedule", bookingHandler.GetSchedule).Methods("GET")
+	api.HandleFunc("/rooms/{id}/schedule/date", bookingHandler.GetScheduleByDate).Methods("GET")
 
 	api.HandleFunc("/bookings", bookingHandler.CreateBooking).Methods("POST")
 	api.HandleFunc("/bookings", bookingHandler.GetAllBookings).Methods("GET")
 	api.HandleFunc("/bookings/my", bookingHandler.GetMyBookings).Methods("GET")
-	api.HandleFunc("/bookings/{id:[0-9]+}", bookingHandler.CancelBooking).Methods("DELETE")
+	api.HandleFunc("/bookings/{id}", bookingHandler.CancelBooking).Methods("DELETE")
 
 	return r
 }

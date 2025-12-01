@@ -85,9 +85,8 @@ func (h *RoomHandler) GetAllRooms(w http.ResponseWriter, r *http.Request) {
 
 func (h *RoomHandler) GetRoomByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	roomIDStr := vars["id"]
-	roomID, err := strconv.ParseInt(roomIDStr, 10, 64)
-	if err != nil {
+	roomID := vars["id"]
+	if roomID == "" {
 		http.Error(w, `{"error":"invalid room id"}`, http.StatusBadRequest)
 		return
 	}
@@ -126,9 +125,8 @@ func (h *RoomHandler) DeleteRoomByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	roomIDStr := vars["id"]
-	roomID, err := strconv.ParseInt(roomIDStr, 10, 64)
-	if err != nil {
+	roomID := vars["id"]
+	if roomID == "" {
 		http.Error(w, `{"error":"invalid room id"}`, http.StatusBadRequest)
 		return
 	}

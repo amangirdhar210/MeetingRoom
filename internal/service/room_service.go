@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/amangirdhar210/meeting-room/internal/domain"
+	"github.com/google/uuid"
 )
 
 type RoomServiceImpl struct {
@@ -33,6 +34,7 @@ func (s *RoomServiceImpl) AddRoom(room *domain.Room) error {
 		room.Amenities = []string{}
 	}
 
+	room.ID = uuid.New().String()
 	room.CreatedAt = time.Now()
 	room.UpdatedAt = time.Now()
 
@@ -50,8 +52,8 @@ func (s *RoomServiceImpl) GetAllRooms() ([]domain.Room, error) {
 	return rooms, nil
 }
 
-func (s *RoomServiceImpl) GetRoomByID(id int64) (*domain.Room, error) {
-	if id <= 0 {
+func (s *RoomServiceImpl) GetRoomByID(id string) (*domain.Room, error) {
+	if id == "" {
 		return nil, domain.ErrInvalidInput
 	}
 	room, err := s.repo.GetByID(id)
@@ -63,8 +65,8 @@ func (s *RoomServiceImpl) GetRoomByID(id int64) (*domain.Room, error) {
 	}
 	return room, nil
 }
-func (s *RoomServiceImpl) DeleteRoomByID(id int64) error {
-	if id <= 0 {
+func (s *RoomServiceImpl) DeleteRoomByID(id string) error {
+	if id == "" {
 		return domain.ErrInvalidInput
 	}
 	return s.repo.DeleteByID(id)
@@ -78,8 +80,8 @@ func (s *RoomServiceImpl) SearchRooms(minCapacity, maxCapacity int, floor *int, 
 	return rooms, nil
 }
 
-func (s *RoomServiceImpl) CheckAvailability(roomID int64, startTime, endTime time.Time) (bool, []domain.Booking, error) {
-	if roomID <= 0 {
+func (s *RoomServiceImpl) CheckAvailability(roomID string, startTime, endTime time.Time) (bool, []domain.Booking, error) {
+	if roomID == "" {
 		return false, nil, domain.ErrInvalidInput
 	}
 
@@ -91,8 +93,8 @@ func (s *RoomServiceImpl) CheckAvailability(roomID int64, startTime, endTime tim
 	return true, []domain.Booking{}, nil
 }
 
-func (s *RoomServiceImpl) GetAvailableSlots(roomID int64, date time.Time, slotDuration int) ([]domain.TimeSlot, error) {
-	if roomID <= 0 || slotDuration <= 0 {
+func (s *RoomServiceImpl) GetAvailableSlots(roomID string, date time.Time, slotDuration int) ([]domain.TimeSlot, error) {
+	if roomID == "" || slotDuration <= 0 {
 		return nil, domain.ErrInvalidInput
 	}
 

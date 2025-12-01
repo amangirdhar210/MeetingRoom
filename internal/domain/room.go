@@ -3,7 +3,7 @@ package domain
 import "time"
 
 type Room struct {
-	ID          int64     `json:"id"`
+	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	RoomNumber  int       `json:"roomNumber"`
 	Capacity    int       `json:"capacity"`

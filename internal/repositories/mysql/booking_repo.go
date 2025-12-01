@@ -34,7 +34,7 @@ func (r *BookingRepositorySQLite) scanBookings(rows *sql.Rows) ([]domain.Booking
 	return bookings, nil
 }
 
-func (r *BookingRepositorySQLite) checkAvailability(roomID int64, startTime, endTime time.Time) (bool, error) {
+func (r *BookingRepositorySQLite) checkAvailability(roomID string, startTime, endTime time.Time) (bool, error) {
 	query := `
 		SELECT COUNT(*) 
 		FROM bookings 
@@ -66,13 +66,14 @@ func (r *BookingRepositorySQLite) Create(booking *domain.Booking) error {
 	}
 
 	query := `
-		INSERT INTO bookings (user_id, room_id, start_time, end_time, purpose, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO bookings (id, user_id, room_id, start_time, end_time, purpose, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	_, err = r.db.ExecContext(ctx, query,
+		booking.ID,
 		booking.UserID,
 		booking.RoomID,
 		booking.StartTime,
@@ -84,7 +85,7 @@ func (r *BookingRepositorySQLite) Create(booking *domain.Booking) error {
 	return err
 }
 
-func (r *BookingRepositorySQLite) GetByID(bookingID int64) (*domain.Booking, error) {
+func (r *BookingRepositorySQLite) GetByID(bookingID string) (*domain.Booking, error) {
 	query := `
 		SELECT id, user_id, room_id, start_time, end_time, purpose, created_at, updated_at
 		FROM bookings WHERE id = ?
@@ -129,7 +130,7 @@ func (r *BookingRepositorySQLite) GetAll() ([]domain.Booking, error) {
 	return bookings, nil
 }
 
-func (r *BookingRepositorySQLite) GetByRoomAndTime(roomID int64, startTime, endTime time.Time) ([]domain.Booking, error) {
+func (r *BookingRepositorySQLite) GetByRoomAndTime(roomID string, startTime, endTime time.Time) ([]domain.Booking, error) {
 	query := `
 		SELECT id, user_id, room_id, start_time, end_time, purpose, created_at, updated_at
 		FROM bookings
@@ -154,7 +155,7 @@ func (r *BookingRepositorySQLite) GetByRoomAndTime(roomID int64, startTime, endT
 	return bookings, nil
 }
 
-func (r *BookingRepositorySQLite) GetByRoomID(roomID int64) ([]domain.Booking, error) {
+func (r *BookingRepositorySQLite) GetByRoomID(roomID string) ([]domain.Booking, error) {
 	query := `
 		SELECT id, user_id, room_id, start_time, end_time, purpose, created_at, updated_at
 		FROM bookings
@@ -177,7 +178,7 @@ func (r *BookingRepositorySQLite) GetByRoomID(roomID int64) ([]domain.Booking, e
 	return bookings, nil
 }
 
-func (r *BookingRepositorySQLite) GetByUserID(userID int64) ([]domain.Booking, error) {
+func (r *BookingRepositorySQLite) GetByUserID(userID string) ([]domain.Booking, error) {
 	query := `
 		SELECT id, user_id, room_id, start_time, end_time, purpose, created_at, updated_at
 		FROM bookings
@@ -200,7 +201,7 @@ func (r *BookingRepositorySQLite) GetByUserID(userID int64) ([]domain.Booking, e
 	return bookings, nil
 }
 
-func (r *BookingRepositorySQLite) Cancel(bookingID int64) error {
+func (r *BookingRepositorySQLite) Cancel(bookingID string) error {
 	query := `DELETE FROM bookings WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -238,7 +239,7 @@ func (r *BookingRepositorySQLite) GetByDateRange(startDate, endDate time.Time) (
 	return r.scanBookings(rows)
 }
 
-func (r *BookingRepositorySQLite) GetByRoomIDAndDate(roomID int64, targetDate time.Time) ([]domain.Booking, error) {
+func (r *BookingRepositorySQLite) GetByRoomIDAndDate(roomID string, targetDate time.Time) ([]domain.Booking, error) {
 	startOfDay := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 0, 0, 0, 0, targetDate.Location())
 	endOfDay := startOfDay.Add(24 * time.Hour)
 

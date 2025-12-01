@@ -62,8 +62,8 @@ func JWTAuthMiddleware(secret string) func(http.Handler) http.Handler {
 	}
 }
 
-func GetUserIDRole(ctx context.Context) (int64, string, bool) {
-	userID, ok1 := ctx.Value(UserIDKey).(int64)
+func GetUserIDRole(ctx context.Context) (string, string, bool) {
+	userID, ok1 := ctx.Value(UserIDKey).(string)
 	role, ok2 := ctx.Value(UserRoleKey).(string)
 	return userID, role, ok1 && ok2
 }

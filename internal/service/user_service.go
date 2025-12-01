@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/amangirdhar210/meeting-room/internal/domain"
+	"github.com/google/uuid"
 )
 
 type UserServiceImpl struct {
@@ -45,6 +46,7 @@ func (s *UserServiceImpl) Register(user *domain.User) error {
 	if err != nil {
 		return err
 	}
+	user.ID = uuid.New().String()
 	user.Password = hashed
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
@@ -63,10 +65,16 @@ func (s *UserServiceImpl) GetAllUsers() ([]domain.User, error) {
 	return users, nil
 }
 
-func (s *UserServiceImpl) GetUserByID(id int64) (*domain.User, error) {
+func (s *UserServiceImpl) GetUserByID(id string) (*domain.User, error) {
+	if id == "" {
+		return nil, domain.ErrInvalidInput
+	}
 	return s.repo.GetByID(id)
 }
 
-func (s *UserServiceImpl) DeleteUserByID(id int64) error {
+func (s *UserServiceImpl) DeleteUserByID(id string) error {
+	if id == "" {
+		return domain.ErrInvalidInput
+	}
 	return s.repo.DeleteByID(id)
 }

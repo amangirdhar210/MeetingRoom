@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -11,7 +12,7 @@ const schema = `
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL,
@@ -21,7 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS rooms (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   room_number INTEGER NOT NULL,
   capacity INTEGER NOT NULL,
@@ -35,9 +36,9 @@ CREATE TABLE IF NOT EXISTS rooms (
 );
 
 CREATE TABLE IF NOT EXISTS bookings (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  room_id INTEGER NOT NULL,
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  room_id TEXT NOT NULL,
   start_time DATETIME NOT NULL,
   end_time DATETIME NOT NULL,
   purpose TEXT,
@@ -66,9 +67,10 @@ func InitSQLite(db *sql.DB) error {
 			return err
 		}
 
+		adminID := uuid.New().String()
 		_, err = db.Exec(
-			`INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`,
-			"Admin", "admin@example.com", string(hashedPassword), "admin",
+			`INSERT INTO users (id, name, email, password, role) VALUES (?, ?, ?, ?, ?)`,
+			adminID, "Admin", "admin@example.com", string(hashedPassword), "admin",
 		)
 		if err != nil {
 			log.Printf("Failed to seed admin user: %v", err)

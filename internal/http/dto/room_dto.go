@@ -14,7 +14,7 @@ type AddRoomRequest struct {
 }
 
 type RoomDTO struct {
-	ID          int64    `json:"id"`
+	ID          string   `json:"id"`
 	Name        string   `json:"name"`
 	RoomNumber  int      `json:"roomNumber"`
 	Capacity    int      `json:"capacity"`
@@ -26,7 +26,7 @@ type RoomDTO struct {
 }
 
 type RoomWithAvailabilityDTO struct {
-	ID               int64      `json:"id"`
+	ID               string     `json:"id"`
 	Name             string     `json:"name"`
 	RoomNumber       int        `json:"roomNumber"`
 	Capacity         int        `json:"capacity"`
@@ -37,7 +37,7 @@ type RoomWithAvailabilityDTO struct {
 	Description      string     `json:"description,omitempty"`
 	IsAvailable      bool       `json:"isAvailable"`
 	NextAvailableAt  *time.Time `json:"nextAvailableAt,omitempty"`
-	CurrentBookingID *int64     `json:"currentBookingId,omitempty"`
+	CurrentBookingID *string    `json:"currentBookingId,omitempty"`
 }
 
 type RoomSearchFilters struct {
@@ -51,14 +51,14 @@ type RoomSearchFilters struct {
 }
 
 type AvailabilityCheckRequest struct {
-	RoomID    int64  `json:"roomId" validate:"required"`
+	RoomID    string `json:"roomId" validate:"required"`
 	StartTime string `json:"startTime" validate:"required"`
 	EndTime   string `json:"endTime" validate:"required"`
 }
 
 type AvailabilityCheckResponse struct {
 	Available        bool                    `json:"available"`
-	RoomID           int64                   `json:"roomId"`
+	RoomID           string                  `json:"roomId"`
 	RoomName         string                  `json:"roomName"`
 	RequestedStart   time.Time               `json:"requestedStart"`
 	RequestedEnd     time.Time               `json:"requestedEnd"`

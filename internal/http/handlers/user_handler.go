@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/amangirdhar210/meeting-room/internal/domain"
 	"github.com/amangirdhar210/meeting-room/internal/http/dto"
@@ -78,9 +77,8 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	idStr := vars["id"]
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
+	id := vars["id"]
+	if id == "" {
 		http.Error(w, `{"error":"invalid user id"}`, http.StatusBadRequest)
 		return
 	}

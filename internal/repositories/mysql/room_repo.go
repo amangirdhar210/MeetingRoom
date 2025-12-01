@@ -60,13 +60,14 @@ func (r *RoomRepositorySQLite) Create(room *domain.Room) error {
 	}
 
 	query := `
-		INSERT INTO rooms (name, room_number, capacity, floor, amenities, status, location, description, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO rooms (id, name, room_number, capacity, floor, amenities, status, location, description, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	_, execErr := r.db.ExecContext(ctx, query,
+		room.ID,
 		room.Name,
 		room.RoomNumber,
 		room.Capacity,
@@ -102,7 +103,7 @@ func (r *RoomRepositorySQLite) GetAll() ([]domain.Room, error) {
 	return rooms, nil
 }
 
-func (r *RoomRepositorySQLite) GetByID(roomID int64) (*domain.Room, error) {
+func (r *RoomRepositorySQLite) GetByID(roomID string) (*domain.Room, error) {
 	query := `SELECT id, name, room_number, capacity, floor, amenities, status, location, description, created_at, updated_at FROM rooms WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -124,7 +125,7 @@ func (r *RoomRepositorySQLite) GetByID(roomID int64) (*domain.Room, error) {
 	return &room, nil
 }
 
-func (r *RoomRepositorySQLite) UpdateAvailability(roomID int64, roomStatus string) error {
+func (r *RoomRepositorySQLite) UpdateAvailability(roomID string, roomStatus string) error {
 	query := `UPDATE rooms SET status = ?, updated_at = ? WHERE id = ?`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -143,8 +144,8 @@ func (r *RoomRepositorySQLite) UpdateAvailability(roomID int64, roomStatus strin
 	return nil
 }
 
-func (r *RoomRepositorySQLite) DeleteByID(roomID int64) error {
-	if roomID <= 0 {
+func (r *RoomRepositorySQLite) DeleteByID(roomID string) error {
+	if roomID == "" {
 		return domain.ErrInvalidInput
 	}
 

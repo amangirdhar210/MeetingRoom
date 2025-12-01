@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/amangirdhar210/meeting-room/internal/domain"
@@ -106,9 +105,8 @@ func (h *BookingHandler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	idStr := vars["id"]
-	bookingID, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
+	bookingID := vars["id"]
+	if bookingID == "" {
 		http.Error(w, `{"error":"invalid booking id"}`, http.StatusBadRequest)
 		return
 	}
@@ -172,9 +170,8 @@ func (h *BookingHandler) GetMyBookings(w http.ResponseWriter, r *http.Request) {
 
 func (h *BookingHandler) GetSchedule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	roomIDStr := vars["id"]
-	roomID, err := strconv.ParseInt(roomIDStr, 10, 64)
-	if err != nil || roomID <= 0 {
+	roomID := vars["id"]
+	if roomID == "" {
 		http.Error(w, `{"error":"invalid room id"}`, http.StatusBadRequest)
 		return
 	}
@@ -214,9 +211,8 @@ func (h *BookingHandler) GetSchedule(w http.ResponseWriter, r *http.Request) {
 
 func (h *BookingHandler) GetScheduleByDate(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	roomIDStr := vars["id"]
-	roomID, err := strconv.ParseInt(roomIDStr, 10, 64)
-	if err != nil || roomID <= 0 {
+	roomID := vars["id"]
+	if roomID == "" {
 		http.Error(w, `{"error":"invalid room id"}`, http.StatusBadRequest)
 		return
 	}
