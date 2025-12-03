@@ -1,40 +1,86 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/amangirdhar210/meeting-room/internal/app"
-	"github.com/amangirdhar210/meeting-room/internal/http/middleware"
-	"github.com/amangirdhar210/meeting-room/internal/pkg/jwt"
+	"github.com/amangirdhar210/meeting-room/internal/adapters/auth"
+	httpAdapter "github.com/amangirdhar210/meeting-room/internal/adapters/http"
+	"github.com/amangirdhar210/meeting-room/internal/adapters/repository"
+	"github.com/amangirdhar210/meeting-room/internal/config"
+	"github.com/amangirdhar210/meeting-room/internal/core/service"
 	"github.com/amangirdhar210/meeting-room/internal/repositories/mysql"
 )
 
 func main() {
-	jwtSecret := "supersecretkey"
+	cfg := config.LoadConfig()
 
-	jwt.Init(jwtSecret)
-
-	cfg := mysql.DBConfig{
-		Path: "./meeting_room_db.sqlite",
+	if cfg.JWT.Secret == "" {
+		log.Fatal("JWT_SECRET environment variable is required")
 	}
 
-	db, err := mysql.NewSQLiteConnection(cfg)
+	dbCfg := mysql.DBConfig{
+		Path: cfg.Database.Path,
+	}
+
+	db, err := mysql.NewSQLiteConnection(dbCfg)
 	if err != nil {
 		log.Fatalf("Failed to connect to SQLite: %v", err)
 	}
 	defer db.Close()
+
+	db.SetMaxOpenConns(cfg.Database.MaxOpenConns)
+	db.SetMaxIdleConns(cfg.Database.MaxIdleConns)
+	db.SetConnMaxLifetime(cfg.Database.ConnMaxLifetime)
+
 	if err := mysql.InitSQLite(db); err != nil {
 		log.Fatalf("Failed to initialize SQLite schema: %v", err)
 	}
 
-	router := app.SetupRouter(db, jwtSecret)
-	router = middleware.CORSMiddleware(router)
+	userRepo := repository.NewUserRepository(db)
+	roomRepo := repository.NewRoomRepository(db)
+	bookingRepo := repository.NewBookingRepository(db)
 
-	addr := ":8080"
-	fmt.Printf("Server running on http://localhost%s\n", addr)
-	if err := http.ListenAndServe(addr, router); err != nil {
-		log.Fatalf("Server error: %v", err)
+	jwtGenerator := auth.NewJWTGenerator(cfg.JWT.Secret, cfg.JWT.ExpirationTime)
+	passwordHasher := auth.NewBcryptHasher()
+
+	authService := service.NewAuthService(userRepo, jwtGenerator, passwordHasher)
+	userService := service.NewUserService(userRepo, passwordHasher)
+	roomService := service.NewRoomService(roomRepo)
+	bookingService := service.NewBookingService(bookingRepo, roomRepo, userRepo)
+
+	server := httpAdapter.NewHTTPServer(
+		cfg,
+		userService,
+		authService,
+		roomService,
+		bookingService,
+		jwtGenerator,
+	)
+
+	go func() {
+		fmt.Printf("Server starting on http://localhost%s\n", cfg.Server.Port)
+		if err := server.ListenAndServe(); err != nil {
+			log.Printf("Server error: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.ShutdownTimeout)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
 	}
+
+	log.Println("Server exited gracefully")
 }

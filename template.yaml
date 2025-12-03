@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: MeetingRoom Management Serverless Architecture Template
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: provided.al2023
+    Architectures:
+      - x86_64
+
+Resources:
+  MeetingRoomTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MeetingRoomSystem
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      Tags:
+        - Key: Project
+          Value: MeetingRoomBooking
+
+  MeetingAPIGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: MeetingAPIGateway
+      Description: |
+        API Gateway for the application that has authorizer (custom lambda based) and redirects 
+        traffic to Lambda invocation
+      StageName: Dev
+      Cors: "'*'"
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      Description: |
+        Login Function lambda
+      CodeUri: ./internal/lambda/login
+      Handler: bootstrap
+      Environment:
+        Variables:
+          TABLE_NAME: MeetingRoomSystem
+          JWT_SECRET: mySecretkeyjwt
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBReadPolicy:
+            TableName: MeetingRoomSystem
+      Events:
+        Login:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MeetingAPIGateway
+            Path: /login
+            Method: POST
+
+  GetUserByIdFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      Description: |
+        Get User By ID Function lambda
+      CodeUri: ./internal/lambda/user/getUserByID
+      Handler: bootstrap
+      Environment:
+        Variables:
+          TABLE_NAME: MeetingRoomSystem
+          JWT_SECRET: mySecretkeyjwt
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBReadPolicy:
+            TableName: MeetingRoomSystem
+      Events:
+        GetUserById:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MeetingAPIGateway
+            Path: api/users/{id}
+            Method: GET
