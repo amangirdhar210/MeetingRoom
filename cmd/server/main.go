@@ -14,9 +14,14 @@ import (
 	"github.com/amangirdhar210/meeting-room/internal/config"
 	"github.com/amangirdhar210/meeting-room/internal/core/service"
 	"github.com/amangirdhar210/meeting-room/internal/repositories/mysql"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found or error loading it")
+	}
+
 	cfg := config.LoadConfig()
 
 	if cfg.JWT.Secret == "" {
