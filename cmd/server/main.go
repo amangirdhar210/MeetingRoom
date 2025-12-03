@@ -1,12 +1,8 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/amangirdhar210/meeting-room/internal/adapters/auth"
 	httpAdapter "github.com/amangirdhar210/meeting-room/internal/adapters/http"
@@ -67,25 +63,8 @@ func main() {
 		jwtGenerator,
 	)
 
-	go func() {
-		fmt.Printf("Server starting on http://localhost%s\n", cfg.Server.Port)
-		if err := server.ListenAndServe(); err != nil {
-			log.Printf("Server error: %v", err)
-		}
-	}()
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Println("Shutting down server...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.ShutdownTimeout)
-	defer cancel()
-
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+	fmt.Printf("Server starting on http://localhost%s\n", cfg.Server.Port)
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatalf("Server error: %v", err)
 	}
-
-	log.Println("Server exited gracefully")
 }
