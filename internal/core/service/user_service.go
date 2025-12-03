@@ -67,7 +67,7 @@ func (s *userService) GetAllUsers() ([]domain.User, error) {
 }
 
 func (s *userService) GetUserByID(id string) (*domain.User, error) {
-	if id == "" {
+	if id == "" || len(id) < 10 {
 		return nil, domain.ErrInvalidInput
 	}
 	return s.repo.GetByID(id)

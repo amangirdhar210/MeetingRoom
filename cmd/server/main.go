@@ -6,10 +6,9 @@ import (
 
 	"github.com/amangirdhar210/meeting-room/internal/adapters/auth"
 	httpAdapter "github.com/amangirdhar210/meeting-room/internal/adapters/http"
-	"github.com/amangirdhar210/meeting-room/internal/adapters/repository"
+	repo "github.com/amangirdhar210/meeting-room/internal/adapters/repositories/sqlite"
 	"github.com/amangirdhar210/meeting-room/internal/config"
 	"github.com/amangirdhar210/meeting-room/internal/core/service"
-	"github.com/amangirdhar210/meeting-room/internal/repositories/mysql"
 	"github.com/joho/godotenv"
 )
 
@@ -24,11 +23,11 @@ func main() {
 		log.Fatal("JWT_SECRET environment variable is required")
 	}
 
-	dbCfg := mysql.DBConfig{
+	dbCfg := repo.DBConfig{
 		Path: cfg.Database.Path,
 	}
 
-	db, err := mysql.NewSQLiteConnection(dbCfg)
+	db, err := repo.NewSQLiteConnection(dbCfg)
 	if err != nil {
 		log.Fatalf("Failed to connect to SQLite: %v", err)
 	}
@@ -38,13 +37,13 @@ func main() {
 	db.SetMaxIdleConns(cfg.Database.MaxIdleConns)
 	db.SetConnMaxLifetime(cfg.Database.ConnMaxLifetime)
 
-	if err := mysql.InitSQLite(db); err != nil {
+	if err := repo.InitSQLite(db); err != nil {
 		log.Fatalf("Failed to initialize SQLite schema: %v", err)
 	}
 
-	userRepo := repository.NewUserRepository(db)
-	roomRepo := repository.NewRoomRepository(db)
-	bookingRepo := repository.NewBookingRepository(db)
+	userRepo := repo.NewUserRepository(db)
+	roomRepo := repo.NewRoomRepository(db)
+	bookingRepo := repo.NewBookingRepository(db)
 
 	jwtGenerator := auth.NewJWTGenerator(cfg.JWT.Secret, cfg.JWT.ExpirationTime)
 	passwordHasher := auth.NewBcryptHasher()

@@ -8,6 +8,10 @@ Globals:
     Runtime: provided.al2023
     Architectures:
       - x86_64
+    Environment:
+      Variables:
+        TABLE_NAME: MeetingRoomSystem
+        JWT_SECRET: amangirdharamangirdhar123123
 
 Resources:
   MeetingRoomTable:
@@ -27,7 +31,7 @@ Resources:
           KeyType: RANGE
       Tags:
         - Key: Project
-          Value: MeetingRoomBooking
+          Value: MeetingRoomManagement
 
   MeetingAPIGateway:
     Type: AWS::Serverless::Api
@@ -37,20 +41,70 @@ Resources:
         API Gateway for the application that has authorizer (custom lambda based) and redirects 
         traffic to Lambda invocation
       StageName: Dev
-      Cors: "'*'"
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: JWTAuthorizer
+        Authorizers:
+          JWTAuthorizer:
+            FunctionArn: !GetAtt AuthorizerFunction.Arn
+            Identity:
+              Headers:
+                - Authorization
+
+  AuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      Name: AuthorizerFunction
+      Description: JWT token authorizer
+      CodeUri: ./internal/lambda/authorizer
+      Handler: bootstrap
+      Policies:
+        - AWSLambdaBasicExecutionRole
+
+  AuthorizerFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AuthorizerFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MeetingAPIGateway}/*"
+
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      Name: HealthFunction
+      Description: Health check endpoint
+      CodeUri: ./internal/lambda/health
+      Handler: bootstrap
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        Health:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MeetingAPIGateway
+            Path: /health
+            Method: GET
+            Auth:
+              Authorizer: NONE
+
   LoginFunction:
     Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: go1.x
     Properties:
+      Name: LoginFunction
       Description: |
         Login Function lambda
       CodeUri: ./internal/lambda/login
       Handler: bootstrap
-      Environment:
-        Variables:
-          TABLE_NAME: MeetingRoomSystem
-          JWT_SECRET: mySecretkeyjwt
       Policies:
         - AWSLambdaBasicExecutionRole
         - DynamoDBReadPolicy:
@@ -62,20 +116,19 @@ Resources:
             RestApiId: !Ref MeetingAPIGateway
             Path: /login
             Method: POST
+            Auth:
+              Authorizer: NONE
 
   GetUserByIdFunction:
     Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: go1.x
     Properties:
+      Name: GetUserByIdFunction
       Description: |
         Get User By ID Function lambda
       CodeUri: ./internal/lambda/user/getUserByID
       Handler: bootstrap
-      Environment:
-        Variables:
-          TABLE_NAME: MeetingRoomSystem
-          JWT_SECRET: mySecretkeyjwt
       Policies:
         - AWSLambdaBasicExecutionRole
         - DynamoDBReadPolicy:
@@ -85,5 +138,70 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref MeetingAPIGateway
-            Path: api/users/{id}
+            Path: /api/users/{id}
             Method: GET
+
+  GetAllUsersFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      Name: GetAllUsersFunction
+      Description: Get all users
+      CodeUri: ./internal/lambda/user/getAllUsers
+      Handler: bootstrap
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBReadPolicy:
+            TableName: MeetingRoomSystem
+      Events:
+        GetAllUsers:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MeetingAPIGateway
+            Path: /api/users
+            Method: GET
+
+  RegisterUserFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      Name: RegisterUserFunction
+      Description: Register a new user
+      CodeUri: ./internal/lambda/user/registerUser
+      Handler: bootstrap
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: MeetingRoomSystem
+      Events:
+        RegisterUser:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MeetingAPIGateway
+            Path: /api/users/register
+            Method: POST
+            Auth:
+              Authorizer: NONE
+
+  DeleteUserFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      Name: DeleteUserFunction
+      Description: Delete a user by ID
+      CodeUri: ./internal/lambda/user/deleteUser
+      Handler: bootstrap
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: MeetingRoomSystem
+      Events:
+        DeleteUser:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MeetingAPIGateway
+            Path: /api/users/{id}
+            Method: DELETE

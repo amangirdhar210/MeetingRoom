@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/amangirdhar210/meeting-room/internal/adapters/httputil"
+	httputil "github.com/amangirdhar210/meeting-room/internal/adapters/httpUtils"
 	"github.com/amangirdhar210/meeting-room/internal/core/service"
 	"github.com/amangirdhar210/meeting-room/internal/http/dto"
 )

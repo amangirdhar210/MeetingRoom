@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/amangirdhar210/meeting-room/internal/adapters/auth"
-	"github.com/amangirdhar210/meeting-room/internal/adapters/httputil"
+	httputil "github.com/amangirdhar210/meeting-room/internal/adapters/httpUtils"
 )
 
 func CORSMiddleware(next http.Handler, allowedOrigins []string) http.Handler {

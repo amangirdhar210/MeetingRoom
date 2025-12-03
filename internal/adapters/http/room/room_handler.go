@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/amangirdhar210/meeting-room/internal/adapters/httputil"
+	httputil "github.com/amangirdhar210/meeting-room/internal/adapters/httpUtils"
 	"github.com/amangirdhar210/meeting-room/internal/core/domain"
 	"github.com/amangirdhar210/meeting-room/internal/core/service"
 	"github.com/amangirdhar210/meeting-room/internal/http/dto"

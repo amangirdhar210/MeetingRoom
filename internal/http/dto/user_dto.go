@@ -13,17 +13,23 @@ type LoginUserRequest struct {
 }
 
 type UserDTO struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Role  string `json:"role"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	Role      string `json:"role"`
+	CreatedAt int64  `json:"created_at,omitempty"`
+	UpdatedAt int64  `json:"updated_at,omitempty"`
 }
 
 type LoginUserResponse struct {
 	Token string  `json:"token"`
-	User  UserDTO `json:"user"`
+	User  UserDTO `json:"user,omitempty"`
 }
 
 type GenericResponse struct {
 	Message string `json:"message"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
 }
