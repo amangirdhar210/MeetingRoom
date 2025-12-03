@@ -59,7 +59,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
-      Name: AuthorizerFunction
+      FunctionName: MeetingRoom-Authorizer
       Description: JWT token authorizer
       CodeUri: ./internal/lambda/authorizer
       Handler: bootstrap
@@ -79,7 +79,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
-      Name: HealthFunction
+      FunctionName: MeetingRoom-Health
       Description: Health check endpoint
       CodeUri: ./internal/lambda/health
       Handler: bootstrap
@@ -100,7 +100,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
-      Name: LoginFunction
+      FunctionName: MeetingRoom-Login
       Description: |
         Login Function lambda
       CodeUri: ./internal/lambda/login
@@ -124,7 +124,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
-      Name: GetUserByIdFunction
+      FunctionName: MeetingRoom-GetUserById
       Description: |
         Get User By ID Function lambda
       CodeUri: ./internal/lambda/user/getUserByID
@@ -146,7 +146,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
-      Name: GetAllUsersFunction
+      FunctionName: MeetingRoom-GetAllUsers
       Description: Get all users
       CodeUri: ./internal/lambda/user/getAllUsers
       Handler: bootstrap
@@ -167,7 +167,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
-      Name: RegisterUserFunction
+      FunctionName: MeetingRoom-RegisterUser
       Description: Register a new user
       CodeUri: ./internal/lambda/user/registerUser
       Handler: bootstrap
@@ -190,7 +190,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
-      Name: DeleteUserFunction
+      FunctionName: MeetingRoom-DeleteUser
       Description: Delete a user by ID
       CodeUri: ./internal/lambda/user/deleteUser
       Handler: bootstrap
