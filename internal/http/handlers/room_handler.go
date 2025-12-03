@@ -177,15 +177,17 @@ func (h *RoomHandler) SearchRooms(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var startTime, endTime *time.Time
+	var startTime, endTime *int64
 	if startStr := queryParams.Get("startTime"); startStr != "" {
 		if t, err := time.Parse(time.RFC3339, startStr); err == nil {
-			startTime = &t
+			unix := t.Unix()
+			startTime = &unix
 		}
 	}
 	if endStr := queryParams.Get("endTime"); endStr != "" {
 		if t, err := time.Parse(time.RFC3339, endStr); err == nil {
-			endTime = &t
+			unix := t.Unix()
+			endTime = &unix
 		}
 	}
 
@@ -233,7 +235,7 @@ func (h *RoomHandler) CheckAvailability(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	isAvailable, conflictingBookings, err := h.RoomService.CheckAvailability(request.RoomID, startTime, endTime)
+	isAvailable, conflictingBookings, err := h.RoomService.CheckAvailability(request.RoomID, startTime.Unix(), endTime.Unix())
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			http.Error(w, `{"error":"room not found"}`, http.StatusNotFound)
@@ -263,8 +265,8 @@ func (h *RoomHandler) CheckAvailability(w http.ResponseWriter, r *http.Request) 
 		Available:        isAvailable,
 		RoomID:           request.RoomID,
 		RoomName:         room.Name,
-		RequestedStart:   startTime,
-		RequestedEnd:     endTime,
+		RequestedStart:   startTime.Unix(),
+		RequestedEnd:     endTime.Unix(),
 		ConflictingSlots: conflictingSlots,
 		SuggestedSlots:   []dto.TimeSlotDTO{},
 	}

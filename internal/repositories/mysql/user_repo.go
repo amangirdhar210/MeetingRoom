@@ -30,7 +30,7 @@ func (r *UserRepositorySQLite) Create(user *domain.User) error {
 	defer cancel()
 
 	_, err := r.db.ExecContext(ctx, query,
-		user.ID, user.Name, user.Email, user.Password, user.Role, time.Now(), time.Now(),
+		user.ID, user.Name, user.Email, user.Password, user.Role, user.CreatedAt, user.UpdatedAt,
 	)
 	return err
 }

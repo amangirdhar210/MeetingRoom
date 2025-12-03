@@ -63,8 +63,8 @@ func (s *BookingServiceImpl) CreateBooking(booking *domain.Booking) error {
 
 	booking.ID = uuid.New().String()
 	booking.Status = "confirmed"
-	booking.CreatedAt = time.Now()
-	booking.UpdatedAt = time.Now()
+	booking.CreatedAt = time.Now().Unix()
+	booking.UpdatedAt = time.Now().Unix()
 
 	err = s.repo.Create(booking)
 	if err != nil {
@@ -184,7 +184,7 @@ func (s *BookingServiceImpl) GetBookingsByUserID(userID string) ([]domain.Bookin
 	return bookings, nil
 }
 
-func (s *BookingServiceImpl) GetBookingsByDateRange(startDate, endDate time.Time) ([]domain.Booking, error) {
+func (s *BookingServiceImpl) GetBookingsByDateRange(startDate, endDate int64) ([]domain.Booking, error) {
 	bookings, err := s.repo.GetByDateRange(startDate, endDate)
 	if err != nil {
 		return nil, err
@@ -192,7 +192,7 @@ func (s *BookingServiceImpl) GetBookingsByDateRange(startDate, endDate time.Time
 	return bookings, nil
 }
 
-func (s *BookingServiceImpl) GetRoomScheduleByDate(roomID string, targetDate time.Time) (*domain.RoomScheduleResponse, error) {
+func (s *BookingServiceImpl) GetRoomScheduleByDate(roomID string, targetDate int64) (*domain.RoomScheduleResponse, error) {
 	if roomID == "" {
 		return nil, domain.ErrInvalidInput
 	}
@@ -219,8 +219,8 @@ func (s *BookingServiceImpl) GetRoomScheduleByDate(roomID string, targetDate tim
 		}
 
 		scheduleSlots = append(scheduleSlots, domain.ScheduleSlot{
-			StartTime: booking.StartTime.Format(time.RFC3339),
-			EndTime:   booking.EndTime.Format(time.RFC3339),
+			StartTime: time.Unix(booking.StartTime, 0).Format(time.RFC3339),
+			EndTime:   time.Unix(booking.EndTime, 0).Format(time.RFC3339),
 			IsBooked:  true,
 			BookingID: &booking.ID,
 			UserName:  userName,
@@ -232,7 +232,7 @@ func (s *BookingServiceImpl) GetRoomScheduleByDate(roomID string, targetDate tim
 		RoomID:     room.ID,
 		RoomName:   room.Name,
 		RoomNumber: room.RoomNumber,
-		Date:       targetDate.Format("2006-01-02"),
+		Date:       time.Unix(targetDate, 0).Format("2006-01-02"),
 		Bookings:   scheduleSlots,
 	}
 

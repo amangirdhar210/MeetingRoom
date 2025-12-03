@@ -35,8 +35,8 @@ func (s *RoomServiceImpl) AddRoom(room *domain.Room) error {
 	}
 
 	room.ID = uuid.New().String()
-	room.CreatedAt = time.Now()
-	room.UpdatedAt = time.Now()
+	room.CreatedAt = time.Now().Unix()
+	room.UpdatedAt = time.Now().Unix()
 
 	return s.repo.Create(room)
 }
@@ -72,7 +72,7 @@ func (s *RoomServiceImpl) DeleteRoomByID(id string) error {
 	return s.repo.DeleteByID(id)
 }
 
-func (s *RoomServiceImpl) SearchRooms(minCapacity, maxCapacity int, floor *int, amenities []string, startTime, endTime *time.Time) ([]domain.Room, error) {
+func (s *RoomServiceImpl) SearchRooms(minCapacity, maxCapacity int, floor *int, amenities []string, startTime, endTime *int64) ([]domain.Room, error) {
 	rooms, err := s.repo.SearchWithFilters(minCapacity, maxCapacity, floor, amenities)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func (s *RoomServiceImpl) SearchRooms(minCapacity, maxCapacity int, floor *int, 
 	return rooms, nil
 }
 
-func (s *RoomServiceImpl) CheckAvailability(roomID string, startTime, endTime time.Time) (bool, []domain.Booking, error) {
+func (s *RoomServiceImpl) CheckAvailability(roomID string, startTime, endTime int64) (bool, []domain.Booking, error) {
 	if roomID == "" {
 		return false, nil, domain.ErrInvalidInput
 	}
@@ -93,7 +93,7 @@ func (s *RoomServiceImpl) CheckAvailability(roomID string, startTime, endTime ti
 	return true, []domain.Booking{}, nil
 }
 
-func (s *RoomServiceImpl) GetAvailableSlots(roomID string, date time.Time, slotDuration int) ([]domain.TimeSlot, error) {
+func (s *RoomServiceImpl) GetAvailableSlots(roomID string, date int64, slotDuration int) ([]domain.TimeSlot, error) {
 	if roomID == "" || slotDuration <= 0 {
 		return nil, domain.ErrInvalidInput
 	}

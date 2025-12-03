@@ -1,7 +1,5 @@
 package dto
 
-import "time"
-
 type AddRoomRequest struct {
 	Name        string   `json:"name" validate:"required"`
 	RoomNumber  int      `json:"roomNumber" validate:"required"`
@@ -26,18 +24,18 @@ type RoomDTO struct {
 }
 
 type RoomWithAvailabilityDTO struct {
-	ID               string     `json:"id"`
-	Name             string     `json:"name"`
-	RoomNumber       int        `json:"roomNumber"`
-	Capacity         int        `json:"capacity"`
-	Floor            int        `json:"floor"`
-	Amenities        []string   `json:"amenities"`
-	Status           string     `json:"status"`
-	Location         string     `json:"location"`
-	Description      string     `json:"description,omitempty"`
-	IsAvailable      bool       `json:"isAvailable"`
-	NextAvailableAt  *time.Time `json:"nextAvailableAt,omitempty"`
-	CurrentBookingID *string    `json:"currentBookingId,omitempty"`
+	ID               string   `json:"id"`
+	Name             string   `json:"name"`
+	RoomNumber       int      `json:"roomNumber"`
+	Capacity         int      `json:"capacity"`
+	Floor            int      `json:"floor"`
+	Amenities        []string `json:"amenities"`
+	Status           string   `json:"status"`
+	Location         string   `json:"location"`
+	Description      string   `json:"description,omitempty"`
+	IsAvailable      bool     `json:"isAvailable"`
+	NextAvailableAt  *int64   `json:"nextAvailableAt,omitempty"`
+	CurrentBookingID *string  `json:"currentBookingId,omitempty"`
 }
 
 type RoomSearchFilters struct {
@@ -60,14 +58,14 @@ type AvailabilityCheckResponse struct {
 	Available        bool                    `json:"available"`
 	RoomID           string                  `json:"roomId"`
 	RoomName         string                  `json:"roomName"`
-	RequestedStart   time.Time               `json:"requestedStart"`
-	RequestedEnd     time.Time               `json:"requestedEnd"`
+	RequestedStart   int64                   `json:"requestedStart"`
+	RequestedEnd     int64                   `json:"requestedEnd"`
 	ConflictingSlots []ConflictingBookingDTO `json:"conflictingSlots,omitempty"`
 	SuggestedSlots   []TimeSlotDTO           `json:"suggestedSlots,omitempty"`
 }
 
 type TimeSlotDTO struct {
-	StartTime time.Time `json:"startTime"`
-	EndTime   time.Time `json:"endTime"`
-	Duration  int       `json:"duration"`
+	StartTime int64 `json:"startTime"`
+	EndTime   int64 `json:"endTime"`
+	Duration  int   `json:"duration"`
 }

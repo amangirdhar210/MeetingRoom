@@ -1,7 +1,5 @@
 package domain
 
-import "time"
-
 type UserRepository interface {
 	Create(user *User) error
 	FindByEmail(email string) (*User, error)
@@ -23,12 +21,12 @@ type BookingRepository interface {
 	Create(booking *Booking) error
 	GetByID(id string) (*Booking, error)
 	GetAll() ([]Booking, error)
-	GetByRoomAndTime(roomID string, start, end time.Time) ([]Booking, error)
+	GetByRoomAndTime(roomID string, start, end int64) ([]Booking, error)
 	GetByRoomID(roomID string) ([]Booking, error)
 	GetByUserID(userID string) ([]Booking, error)
 	Cancel(id string) error
-	GetByDateRange(startDate, endDate time.Time) ([]Booking, error)
-	GetByRoomIDAndDate(roomID string, date time.Time) ([]Booking, error)
+	GetByDateRange(startDate, endDate int64) ([]Booking, error)
+	GetByRoomIDAndDate(roomID string, date int64) ([]Booking, error)
 }
 
 type UserService interface {
@@ -51,9 +49,9 @@ type RoomService interface {
 	GetAllRooms() ([]Room, error)
 	GetRoomByID(id string) (*Room, error)
 	DeleteRoomByID(id string) error
-	SearchRooms(minCapacity, maxCapacity int, floor *int, amenities []string, startTime, endTime *time.Time) ([]Room, error)
-	CheckAvailability(roomID string, startTime, endTime time.Time) (bool, []Booking, error)
-	GetAvailableSlots(roomID string, date time.Time, slotDuration int) ([]TimeSlot, error)
+	SearchRooms(minCapacity, maxCapacity int, floor *int, amenities []string, startTime, endTime *int64) ([]Room, error)
+	CheckAvailability(roomID string, startTime, endTime int64) (bool, []Booking, error)
+	GetAvailableSlots(roomID string, date int64, slotDuration int) ([]TimeSlot, error)
 }
 
 type BookingService interface {
@@ -64,13 +62,13 @@ type BookingService interface {
 	GetBookingsByRoomID(roomID string) ([]Booking, error)
 	GetBookingsByUserID(userID string) ([]Booking, error)
 	GetBookingsWithDetailsByRoomID(roomID string) ([]BookingWithDetails, error)
-	GetBookingsByDateRange(startDate, endDate time.Time) ([]Booking, error)
-	GetRoomScheduleByDate(roomID string, date time.Time) (*RoomScheduleResponse, error)
+	GetBookingsByDateRange(startDate, endDate int64) ([]Booking, error)
+	GetRoomScheduleByDate(roomID string, date int64) (*RoomScheduleResponse, error)
 }
 
 type TimeSlot struct {
-	StartTime time.Time
-	EndTime   time.Time
+	StartTime int64
+	EndTime   int64
 	Duration  int
 }
 

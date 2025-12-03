@@ -48,8 +48,8 @@ func (s *UserServiceImpl) Register(user *domain.User) error {
 	}
 	user.ID = uuid.New().String()
 	user.Password = hashed
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
+	user.CreatedAt = time.Now().Unix()
+	user.UpdatedAt = time.Now().Unix()
 
 	return s.repo.Create(user)
 }

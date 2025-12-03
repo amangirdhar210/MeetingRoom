@@ -48,8 +48,8 @@ func (r *RoomRepositorySQLite) Create(room *domain.Room) error {
 		return domain.ErrInvalidInput
 	}
 
-	now := time.Now()
-	if room.CreatedAt.IsZero() {
+	now := time.Now().Unix()
+	if room.CreatedAt == 0 {
 		room.CreatedAt = now
 	}
 	room.UpdatedAt = now
@@ -130,7 +130,7 @@ func (r *RoomRepositorySQLite) UpdateAvailability(roomID string, roomStatus stri
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	result, err := r.db.ExecContext(ctx, query, roomStatus, time.Now(), roomID)
+	result, err := r.db.ExecContext(ctx, query, roomStatus, time.Now().Unix(), roomID)
 	if err != nil {
 		return err
 	}

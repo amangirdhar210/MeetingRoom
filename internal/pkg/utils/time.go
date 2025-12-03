@@ -1,11 +1,9 @@
 package utils
 
-import "time"
-
-func IsTimeRangeValid(start, end time.Time) bool {
-	return start.Before(end)
+func IsTimeRangeValid(start, end int64) bool {
+	return start < end
 }
 
-func Overlaps(start1, end1, start2, end2 time.Time) bool {
-	return start1.Before(end2) && start2.Before(end1)
+func Overlaps(start1, end1, start2, end2 int64) bool {
+	return start1 < end2 && start2 < end1
 }

@@ -42,8 +42,8 @@ func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	booking := &domain.Booking{
 		UserID:    userID,
 		RoomID:    req.RoomID,
-		StartTime: startTime,
-		EndTime:   endTime,
+		StartTime: startTime.Unix(),
+		EndTime:   endTime.Unix(),
 		Purpose:   req.Purpose,
 	}
 
@@ -188,7 +188,7 @@ func (h *BookingHandler) GetSchedule(w http.ResponseWriter, r *http.Request) {
 
 	var response []dto.DetailedBookingDTO
 	for _, booking := range detailedBookings {
-		durationMinutes := int(booking.EndTime.Sub(booking.StartTime).Minutes())
+		durationMinutes := int((booking.EndTime - booking.StartTime) / 60)
 		response = append(response, dto.DetailedBookingDTO{
 			ID:         booking.ID,
 			UserID:     booking.UserID,
@@ -229,7 +229,7 @@ func (h *BookingHandler) GetScheduleByDate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	schedule, err := h.BookingService.GetRoomScheduleByDate(roomID, targetDate)
+	schedule, err := h.BookingService.GetRoomScheduleByDate(roomID, targetDate.Unix())
 	if err != nil {
 		if err == domain.ErrNotFound {
 			http.Error(w, `{"error":"room not found"}`, http.StatusNotFound)

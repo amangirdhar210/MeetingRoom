@@ -34,7 +34,7 @@ func (r *BookingRepositorySQLite) scanBookings(rows *sql.Rows) ([]domain.Booking
 	return bookings, nil
 }
 
-func (r *BookingRepositorySQLite) checkAvailability(roomID string, startTime, endTime time.Time) (bool, error) {
+func (r *BookingRepositorySQLite) checkAvailability(roomID string, startTime, endTime int64) (bool, error) {
 	query := `
 		SELECT COUNT(*) 
 		FROM bookings 
@@ -79,8 +79,8 @@ func (r *BookingRepositorySQLite) Create(booking *domain.Booking) error {
 		booking.StartTime,
 		booking.EndTime,
 		booking.Purpose,
-		time.Now(),
-		time.Now(),
+		booking.CreatedAt,
+		booking.UpdatedAt,
 	)
 	return err
 }
@@ -130,7 +130,7 @@ func (r *BookingRepositorySQLite) GetAll() ([]domain.Booking, error) {
 	return bookings, nil
 }
 
-func (r *BookingRepositorySQLite) GetByRoomAndTime(roomID string, startTime, endTime time.Time) ([]domain.Booking, error) {
+func (r *BookingRepositorySQLite) GetByRoomAndTime(roomID string, startTime, endTime int64) ([]domain.Booking, error) {
 	query := `
 		SELECT id, user_id, room_id, start_time, end_time, purpose, created_at, updated_at
 		FROM bookings
@@ -220,7 +220,7 @@ func (r *BookingRepositorySQLite) Cancel(bookingID string) error {
 	return nil
 }
 
-func (r *BookingRepositorySQLite) GetByDateRange(startDate, endDate time.Time) ([]domain.Booking, error) {
+func (r *BookingRepositorySQLite) GetByDateRange(startDate, endDate int64) ([]domain.Booking, error) {
 	query := `
 		SELECT id, user_id, room_id, start_time, end_time, purpose, created_at, updated_at
 		FROM bookings
@@ -239,14 +239,15 @@ func (r *BookingRepositorySQLite) GetByDateRange(startDate, endDate time.Time) (
 	return r.scanBookings(rows)
 }
 
-func (r *BookingRepositorySQLite) GetByRoomIDAndDate(roomID string, targetDate time.Time) ([]domain.Booking, error) {
-	startOfDay := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 0, 0, 0, 0, targetDate.Location())
-	endOfDay := startOfDay.Add(24 * time.Hour)
+func (r *BookingRepositorySQLite) GetByRoomIDAndDate(roomID string, targetDate int64) ([]domain.Booking, error) {
+	targetTime := time.Unix(targetDate, 0)
+	startOfDay := time.Date(targetTime.Year(), targetTime.Month(), targetTime.Day(), 0, 0, 0, 0, targetTime.Location()).Unix()
+	endOfDay := time.Date(targetTime.Year(), targetTime.Month(), targetTime.Day(), 23, 59, 59, 0, targetTime.Location()).Unix()
 
 	query := `
 		SELECT id, user_id, room_id, start_time, end_time, purpose, created_at, updated_at
 		FROM bookings
-		WHERE room_id = ? AND start_time >= ? AND start_time < ?
+		WHERE room_id = ? AND start_time >= ? AND start_time <= ?
 		ORDER BY start_time ASC
 	`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

@@ -12,12 +12,6 @@ info:
     - Modern Go 1.18+ implementation with proper error handling
     - Clean architecture with repository, service, and handler layers
 
-    **Code Quality:**
-    - All errors properly handled (no ignored errors)
-    - Reduced code duplication with helper functions
-    - Modern Go idioms (using `any` instead of `interface{}`)
-    - Comprehensive input validation
-    - Efficient database queries with prepared statements
   version: "2.0.0"
   contact:
     name: API Support
@@ -40,7 +34,7 @@ paths:
                   status:
                     type: string
                     example: ok
-  /api/login:
+  /login:
     post:
       summary: Authenticate user and receive JWT token
       tags:
