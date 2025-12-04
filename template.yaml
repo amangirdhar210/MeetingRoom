@@ -205,3 +205,89 @@ Resources:
             RestApiId: !Ref MeetingAPIGateway
             Path: /api/users/{id}
             Method: DELETE
+
+  AddRoomFunction:
+  Type: AWS::Serverless::Function
+  Metadata:
+    BuildMethod: go1.x
+  Properties:
+    FunctionName: MeetingRoom-AddRoom 
+    Description: Add a new room
+    CodeUri: ./internal/lambda/room/addRoom 
+    Handler: bootstrap 
+    Policies:
+      - AWSLambdaBasicExecutionRole
+      - DynamoDBCrudPolicy:
+          TableName: MeetingRoomSystem
+    Events:
+      AddRoom:
+        Type: Api
+        Properties:
+          RestApiId: !Ref MeetingAPIGateway
+          Path: /api/rooms
+          Method: POST
+
+  DeleteRoomByIDFunction:
+  Type: AWS::Serverless::Function
+  Metadata:
+    BuildMethod: go1.x
+  Properties:
+    FunctionName: MeetingRoom-DeleteRoomByID 
+    Description: Delete a room by id 
+    CodeUri: ./internal/lambda/room/deleteRoomByID 
+    Handler: bootstrap 
+    Policies:
+      - AWSLambdaBasicExecutionRole
+      - DynamoDBCrudPolicy:
+          TableName: MeetingRoomSystem
+    Events:
+      AddRoom:
+        Type: Api
+        Properties:
+          RestApiId: !Ref MeetingAPIGateway
+          Path: /api/rooms/{id}
+          Method: DELETE
+
+  GetAllRoomsFunction:
+  Type: AWS::Serverless::Function
+  Metadata:
+    BuildMethod: go1.x
+  Properties:
+    FunctionName: MeetingRoom-GetAllRooms 
+    Description: Get all rooms
+    CodeUri: ./internal/lambda/room/getAllRooms 
+    Handler: bootstrap 
+    Policies:
+      - AWSLambdaBasicExecutionRole
+      - DynamoDBReadPolicy:
+            TableName: MeetingRoomSystem
+    Events:
+      AddRoom:
+        Type: Api
+        Properties:
+          RestApiId: !Ref MeetingAPIGateway
+          Path: /api/rooms
+          Method: GET
+
+  GetRoomByIDFunction:
+  Type: AWS::Serverless::Function
+  Metadata:
+    BuildMethod: go1.x
+  Properties:
+    FunctionName: MeetingRoom-GetRoomByID 
+    Description: Get a room by id 
+    CodeUri: ./internal/lambda/room/deleteRoomByID 
+    Handler: bootstrap 
+    Policies:
+      - AWSLambdaBasicExecutionRole
+      - DynamoDBReadPolicy:
+            TableName: MeetingRoomSystem
+    Events:
+      AddRoom:
+        Type: Api
+        Properties:
+          RestApiId: !Ref MeetingAPIGateway
+          Path: /api/rooms/{id}
+          Method: GET
+
+  
