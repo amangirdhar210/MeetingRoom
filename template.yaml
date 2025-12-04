@@ -50,9 +50,9 @@ Resources:
         Authorizers:
           JWTAuthorizer:
             FunctionArn: !GetAtt AuthorizerFunction.Arn
+            FunctionPayloadType: TOKEN
             Identity:
-              Headers:
-                - Authorization
+              Header: Authorization
 
   AuthorizerFunction:
     Type: AWS::Serverless::Function
