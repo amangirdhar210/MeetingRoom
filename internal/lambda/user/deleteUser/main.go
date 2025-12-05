@@ -34,6 +34,17 @@ func Handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		return shared.Response(400, dto.ErrorResponse{Error: "User ID is required"})
 	}
 
+	var currentUserID string
+	if authContext, ok := request.RequestContext.Authorizer["lambda"].(map[string]interface{}); ok {
+		if uid, exists := authContext["userId"].(string); exists {
+			currentUserID = uid
+		}
+	}
+
+	if currentUserID == idToDelete {
+		return shared.Response(403, dto.ErrorResponse{Error: "Cannot delete yourself"})
+	}
+
 	err := userService.DeleteUserByID(idToDelete)
 	if err != nil {
 		if err == domain.ErrNotFound {

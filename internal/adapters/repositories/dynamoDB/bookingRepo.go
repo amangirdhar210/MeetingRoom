@@ -178,16 +178,12 @@ func (repo *BookingRepositoryDynamoDB) GetByRoomAndTime(roomID string, start, en
 		TableName:              aws.String(repo.table),
 		IndexName:              aws.String("LSI-5"),
 		KeyConditionExpression: aws.String("PK = :pk AND RoomID = :roomId"),
-		FilterExpression:       aws.String("EndTime > :start AND StartTime < :end AND #status <> :cancelled"),
-		ExpressionAttributeNames: map[string]string{
-			"#status": "Status",
-		},
+		FilterExpression:       aws.String("EndTime > :start AND StartTime < :end"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":pk":        &types.AttributeValueMemberS{Value: "BOOKING"},
-			":roomId":    &types.AttributeValueMemberS{Value: roomID},
-			":start":     &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", start)},
-			":end":       &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", end)},
-			":cancelled": &types.AttributeValueMemberS{Value: "cancelled"},
+			":pk":     &types.AttributeValueMemberS{Value: "BOOKING"},
+			":roomId": &types.AttributeValueMemberS{Value: roomID},
+			":start":  &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", start)},
+			":end":    &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", end)},
 		},
 	}
 
@@ -325,30 +321,22 @@ func (repo *BookingRepositoryDynamoDB) GetByUserID(userID string) ([]domain.Book
 func (repo *BookingRepositoryDynamoDB) Cancel(id string) error {
 	ctx := context.Background()
 
-	input := &dynamodb.UpdateItemInput{
+	input := &dynamodb.DeleteItemInput{
 		TableName: aws.String(repo.table),
 		Key: map[string]types.AttributeValue{
 			"PK": &types.AttributeValueMemberS{Value: "BOOKING"},
 			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("BOOKING#%s", id)},
 		},
-		UpdateExpression: aws.String("SET #status = :cancelled, UpdatedAt = :updatedAt"),
-		ExpressionAttributeNames: map[string]string{
-			"#status": "Status",
-		},
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":cancelled": &types.AttributeValueMemberS{Value: "cancelled"},
-			":updatedAt": &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", time.Now().Unix())},
-		},
 		ConditionExpression: aws.String("attribute_exists(PK) AND attribute_exists(SK)"),
 	}
 
-	_, err := repo.client.UpdateItem(ctx, input)
+	_, err := repo.client.DeleteItem(ctx, input)
 	if err != nil {
-		log.Printf("Failed to cancel booking: %v", err)
-		return fmt.Errorf("failed to cancel booking: %w", err)
+		log.Printf("Failed to delete booking: %v", err)
+		return fmt.Errorf("failed to delete booking: %w", err)
 	}
 
-	log.Printf("Booking cancelled successfully: %s", id)
+	log.Printf("Booking deleted successfully: %s", id)
 	return nil
 }
 
@@ -413,16 +401,14 @@ func (repo *BookingRepositoryDynamoDB) GetByRoomIDAndDate(roomID string, date in
 		TableName:              aws.String(repo.table),
 		IndexName:              aws.String("LSI-5"),
 		KeyConditionExpression: aws.String("PK = :pk AND RoomID = :roomId"),
-		FilterExpression:       aws.String("#date = :date AND #status <> :cancelled"),
+		FilterExpression:       aws.String("#date = :date"),
 		ExpressionAttributeNames: map[string]string{
-			"#date":   "Date",
-			"#status": "Status",
+			"#date": "Date",
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":pk":        &types.AttributeValueMemberS{Value: "BOOKING"},
-			":roomId":    &types.AttributeValueMemberS{Value: roomID},
-			":date":      &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", startOfDay)},
-			":cancelled": &types.AttributeValueMemberS{Value: "cancelled"},
+			":pk":     &types.AttributeValueMemberS{Value: "BOOKING"},
+			":roomId": &types.AttributeValueMemberS{Value: roomID},
+			":date":   &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", startOfDay)},
 		},
 	}
 

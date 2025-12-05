@@ -104,10 +104,6 @@ func (s *bookingService) CancelBooking(bookingID string) error {
 		return domain.ErrNotFound
 	}
 
-	if booking.Status == "cancelled" {
-		return domain.ErrConflict
-	}
-
 	err = s.repo.Cancel(bookingID)
 	if err != nil {
 		return err
