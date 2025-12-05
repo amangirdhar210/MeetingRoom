@@ -43,9 +43,14 @@ func LoadConfig() *Config {
 		dbPath = "./meeting_room_db.sqlite"
 	}
 
+	serverPort := os.Getenv("SERVER_PORT")
+	if serverPort == "" {
+		serverPort = ":8080"
+	}
+
 	return &Config{
 		Server: ServerConfig{
-			Port:            ":8080",
+			Port:            serverPort,
 			ReadTimeout:     15 * time.Second,
 			WriteTimeout:    15 * time.Second,
 			ShutdownTimeout: 30 * time.Second,

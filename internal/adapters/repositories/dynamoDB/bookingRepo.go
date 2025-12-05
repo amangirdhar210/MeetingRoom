@@ -176,7 +176,7 @@ func (repo *BookingRepositoryDynamoDB) GetByRoomAndTime(roomID string, start, en
 
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(repo.table),
-		IndexName:              aws.String("LSI-3"),
+		IndexName:              aws.String("LSI-5"),
 		KeyConditionExpression: aws.String("PK = :pk AND RoomID = :roomId"),
 		FilterExpression:       aws.String("EndTime > :start AND StartTime < :end AND #status <> :cancelled"),
 		ExpressionAttributeNames: map[string]string{
@@ -231,7 +231,7 @@ func (repo *BookingRepositoryDynamoDB) GetByRoomID(roomID string) ([]domain.Book
 
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(repo.table),
-		IndexName:              aws.String("LSI-3"),
+		IndexName:              aws.String("LSI-5"),
 		KeyConditionExpression: aws.String("PK = :pk AND RoomID = :roomId"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk":     &types.AttributeValueMemberS{Value: "BOOKING"},
@@ -279,7 +279,7 @@ func (repo *BookingRepositoryDynamoDB) GetByUserID(userID string) ([]domain.Book
 
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(repo.table),
-		IndexName:              aws.String("LSI-1"),
+		IndexName:              aws.String("LSI-3"),
 		KeyConditionExpression: aws.String("PK = :pk AND UserID = :userId"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk":     &types.AttributeValueMemberS{Value: "BOOKING"},
@@ -357,7 +357,7 @@ func (repo *BookingRepositoryDynamoDB) GetByDateRange(startDate, endDate int64) 
 
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(repo.table),
-		IndexName:              aws.String("LSI-2"),
+		IndexName:              aws.String("LSI-4"),
 		KeyConditionExpression: aws.String("PK = :pk AND #date BETWEEN :startDate AND :endDate"),
 		ExpressionAttributeNames: map[string]string{
 			"#date": "Date",
@@ -411,7 +411,7 @@ func (repo *BookingRepositoryDynamoDB) GetByRoomIDAndDate(roomID string, date in
 
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(repo.table),
-		IndexName:              aws.String("LSI-3"),
+		IndexName:              aws.String("LSI-5"),
 		KeyConditionExpression: aws.String("PK = :pk AND RoomID = :roomId"),
 		FilterExpression:       aws.String("#date = :date AND #status <> :cancelled"),
 		ExpressionAttributeNames: map[string]string{

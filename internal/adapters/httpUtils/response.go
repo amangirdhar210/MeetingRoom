@@ -2,6 +2,7 @@ package httputil
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/amangirdhar210/meeting-room/internal/core/domain"
@@ -32,6 +33,7 @@ func HandleError(w http.ResponseWriter, err error) {
 	case domain.ErrTimeRangeInvalid:
 		RespondWithError(w, http.StatusBadRequest, "invalid start or end time for booking")
 	default:
+		log.Printf("Unhandled error: %v", err)
 		RespondWithError(w, http.StatusInternalServerError, "internal server error")
 	}
 }

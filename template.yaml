@@ -527,7 +527,7 @@ Resources:
             Path: /api/bookings
             Method: GET
             Auth:
-              Authorizer: AdminAuthorizer
+              Authorizer: UserAuthorizer
 
   GetMyBookingsFunction:
     Type: AWS::Serverless::Function
@@ -597,3 +597,22 @@ Resources:
             Method: GET
             Auth:
               Authorizer: UserAuthorizer
+
+Outputs:
+  MeetingAPIGatewayUrl:
+    Description: "API Gateway endpoint URL for Dev stage - Use this URL in frontend environment.production.ts"
+    Value: !Sub "https://${MeetingAPIGateway}.execute-api.${AWS::Region}.amazonaws.com/Dev"
+    Export:
+      Name: MeetingRoomAPIUrl
+
+  MeetingAPIGatewayId:
+    Description: "API Gateway ID"
+    Value: !Ref MeetingAPIGateway
+    Export:
+      Name: MeetingRoomAPIId
+
+  DynamoDBTableName:
+    Description: "DynamoDB Table Name"
+    Value: !Ref MeetingRoomTable
+    Export:
+      Name: MeetingRoomTableName

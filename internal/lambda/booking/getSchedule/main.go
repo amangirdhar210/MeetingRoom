@@ -5,7 +5,6 @@ import (
 	"log"
 
 	dynamodbRepo "github.com/amangirdhar210/meeting-room/internal/adapters/repositories/dynamoDB"
-	"github.com/amangirdhar210/meeting-room/internal/core/domain"
 	"github.com/amangirdhar210/meeting-room/internal/core/service"
 	"github.com/amangirdhar210/meeting-room/internal/http/dto"
 	"github.com/amangirdhar210/meeting-room/internal/lambda/shared"
@@ -39,9 +38,6 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	detailedBookings, err := bookingService.GetBookingsWithDetailsByRoomID(roomID)
 	if err != nil {
 		log.Printf("Error getting schedule: %v", err)
-		if err == domain.ErrNotFound {
-			return shared.Response(200, []dto.DetailedBookingDTO{})
-		}
 		return shared.Response(500, dto.ErrorResponse{Error: "Internal server error"})
 	}
 

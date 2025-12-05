@@ -61,7 +61,7 @@ func handler(ctx context.Context, request events.APIGatewayV2CustomAuthorizerV2R
 	log.Printf("Authorized: User %s with role %s\n", claims.UserID, claims.Role)
 	return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 		IsAuthorized: true,
-		Context: map[string]interface{}{
+		Context: map[string]any{
 			"userId": claims.UserID,
 			"role":   claims.Role,
 		},
