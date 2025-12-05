@@ -34,25 +34,84 @@ Resources:
           Value: MeetingRoomManagement
 
   MeetingAPIGateway:
-    Type: AWS::Serverless::Api
+    Type: AWS::Serverless::HttpApi
     Properties:
       Name: MeetingAPIGateway
       Description: |
-        API Gateway for the application that has authorizer (custom lambda based) and redirects 
-        traffic to Lambda invocation
+        API Gateway for the application that has Lambda-based authorizers and
+        routes traffic to Lambda functions.
       StageName: Dev
-      Cors:
-        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
-        AllowHeaders: "'Content-Type,Authorization'"
-        AllowOrigin: "'*'"
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+        AllowOrigins:
+          - "*"
       Auth:
-        DefaultAuthorizer: JWTAuthorizer
+        DefaultAuthorizer: UserAuthorizer
         Authorizers:
-          JWTAuthorizer:
-            FunctionArn: !GetAtt AuthorizerFunction.Arn
-            FunctionPayloadType: TOKEN
+          AdminAuthorizer:
+            FunctionArn: !GetAtt AdminAuthorizerFunction.Arn
+            AuthorizerPayloadFormatVersion: 2.0
+            EnableSimpleResponses: true
+            EnableFunctionDefaultPermissions: true
             Identity:
-              Header: Authorization
+              Headers:
+                - Authorization
+          UserAuthorizer:
+            FunctionArn: !GetAtt UserAuthorizerFunction.Arn
+            AuthorizerPayloadFormatVersion: 2.0
+            EnableSimpleResponses: true
+            EnableFunctionDefaultPermissions: true
+            Identity:
+              Headers:
+                - Authorization
+
+  AdminAuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: MeetingRoom-AdminAuthorizer
+      Description: JWT token authorizer for admin role
+      CodeUri: ./internal/lambda/authorizers/admin_authorizer
+      Handler: bootstrap
+      Policies:
+        - AWSLambdaBasicExecutionRole
+
+  AdminAuthorizerFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AdminAuthorizerFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MeetingAPIGateway}/*"
+
+  UserAuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: MeetingRoom-UserAuthorizer
+      Description: JWT token authorizer for user role
+      CodeUri: ./internal/lambda/authorizers/user_authorizer
+      Handler: bootstrap
+      Policies:
+        - AWSLambdaBasicExecutionRole
+
+  UserAuthorizerFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref UserAuthorizerFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MeetingAPIGateway}/*"
 
   AuthorizerFunction:
     Type: AWS::Serverless::Function
@@ -87,9 +146,9 @@ Resources:
         - AWSLambdaBasicExecutionRole
       Events:
         Health:
-          Type: Api
+          Type: HttpApi
           Properties:
-            RestApiId: !Ref MeetingAPIGateway
+            ApiId: !Ref MeetingAPIGateway
             Path: /health
             Method: GET
             Auth:
@@ -111,9 +170,9 @@ Resources:
             TableName: MeetingRoomSystem
       Events:
         Login:
-          Type: Api
+          Type: HttpApi
           Properties:
-            RestApiId: !Ref MeetingAPIGateway
+            ApiId: !Ref MeetingAPIGateway
             Path: /login
             Method: POST
             Auth:
@@ -135,11 +194,13 @@ Resources:
             TableName: MeetingRoomSystem
       Events:
         GetUserById:
-          Type: Api
+          Type: HttpApi
           Properties:
-            RestApiId: !Ref MeetingAPIGateway
+            ApiId: !Ref MeetingAPIGateway
             Path: /api/users/{id}
-            Method: GET
+            Method: Get
+            Auth:
+              Authorizer: AdminAuthorizer
 
   GetAllUsersFunction:
     Type: AWS::Serverless::Function
@@ -156,11 +217,13 @@ Resources:
             TableName: MeetingRoomSystem
       Events:
         GetAllUsers:
-          Type: Api
+          Type: HttpApi
           Properties:
-            RestApiId: !Ref MeetingAPIGateway
+            ApiId: !Ref MeetingAPIGateway
             Path: /api/users
             Method: GET
+            Auth:
+              Authorizer: AdminAuthorizer
 
   RegisterUserFunction:
     Type: AWS::Serverless::Function
@@ -177,13 +240,13 @@ Resources:
             TableName: MeetingRoomSystem
       Events:
         RegisterUser:
-          Type: Api
+          Type: HttpApi
           Properties:
-            RestApiId: !Ref MeetingAPIGateway
+            ApiId: !Ref MeetingAPIGateway
             Path: /api/users/register
             Method: POST
             Auth:
-              Authorizer: NONE
+              Authorizer: AdminAuthorizer
 
   DeleteUserFunction:
     Type: AWS::Serverless::Function
@@ -200,94 +263,102 @@ Resources:
             TableName: MeetingRoomSystem
       Events:
         DeleteUser:
-          Type: Api
+          Type: HttpApi
           Properties:
-            RestApiId: !Ref MeetingAPIGateway
+            ApiId: !Ref MeetingAPIGateway
             Path: /api/users/{id}
             Method: DELETE
+            Auth:
+              Authorizer: AdminAuthorizer
 
   AddRoomFunction:
-  Type: AWS::Serverless::Function
-  Metadata:
-    BuildMethod: go1.x
-  Properties:
-    FunctionName: MeetingRoom-AddRoom 
-    Description: Add a new room
-    CodeUri: ./internal/lambda/room/addRoom 
-    Handler: bootstrap 
-    Policies:
-      - AWSLambdaBasicExecutionRole
-      - DynamoDBCrudPolicy:
-          TableName: MeetingRoomSystem
-    Events:
-      AddRoom:
-        Type: Api
-        Properties:
-          RestApiId: !Ref MeetingAPIGateway
-          Path: /api/rooms
-          Method: POST
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: MeetingRoom-AddRoom
+      Description: Add a new room
+      CodeUri: ./internal/lambda/room/addRoom
+      Handler: bootstrap
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: MeetingRoomSystem
+      Events:
+        AddRoom:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MeetingAPIGateway
+            Path: /api/rooms
+            Method: POST
+            Auth:
+              Authorizer: AdminAuthorizer
 
   DeleteRoomByIDFunction:
-  Type: AWS::Serverless::Function
-  Metadata:
-    BuildMethod: go1.x
-  Properties:
-    FunctionName: MeetingRoom-DeleteRoomByID 
-    Description: Delete a room by id 
-    CodeUri: ./internal/lambda/room/deleteRoomByID 
-    Handler: bootstrap 
-    Policies:
-      - AWSLambdaBasicExecutionRole
-      - DynamoDBCrudPolicy:
-          TableName: MeetingRoomSystem
-    Events:
-      AddRoom:
-        Type: Api
-        Properties:
-          RestApiId: !Ref MeetingAPIGateway
-          Path: /api/rooms/{id}
-          Method: DELETE
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: MeetingRoom-DeleteRoomByID
+      Description: Delete a room by id
+      CodeUri: ./internal/lambda/room/deleteRoomByID
+      Handler: bootstrap
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: MeetingRoomSystem
+      Events:
+        DeleteRoom:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MeetingAPIGateway
+            Path: /api/rooms/{id}
+            Method: DELETE
+            Auth:
+              Authorizer: AdminAuthorizer
 
   GetAllRoomsFunction:
-  Type: AWS::Serverless::Function
-  Metadata:
-    BuildMethod: go1.x
-  Properties:
-    FunctionName: MeetingRoom-GetAllRooms 
-    Description: Get all rooms
-    CodeUri: ./internal/lambda/room/getAllRooms 
-    Handler: bootstrap 
-    Policies:
-      - AWSLambdaBasicExecutionRole
-      - DynamoDBReadPolicy:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: MeetingRoom-GetAllRooms
+      Description: Get all rooms
+      CodeUri: ./internal/lambda/room/getAllRooms
+      Handler: bootstrap
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBReadPolicy:
             TableName: MeetingRoomSystem
-    Events:
-      AddRoom:
-        Type: Api
-        Properties:
-          RestApiId: !Ref MeetingAPIGateway
-          Path: /api/rooms
-          Method: GET
+      Events:
+        GetAllRooms:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MeetingAPIGateway
+            Path: /api/rooms
+            Method: GET
+            Auth:
+              Authorizer: UserAuthorizer
 
   GetRoomByIDFunction:
-  Type: AWS::Serverless::Function
-  Metadata:
-    BuildMethod: go1.x
-  Properties:
-    FunctionName: MeetingRoom-GetRoomByID 
-    Description: Get a room by id 
-    CodeUri: ./internal/lambda/room/deleteRoomByID 
-    Handler: bootstrap 
-    Policies:
-      - AWSLambdaBasicExecutionRole
-      - DynamoDBReadPolicy:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: MeetingRoom-GetRoomByID
+      Description: Get a room by id
+      CodeUri: ./internal/lambda/room/getRoomByID
+      Handler: bootstrap
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBReadPolicy:
             TableName: MeetingRoomSystem
-    Events:
-      AddRoom:
-        Type: Api
-        Properties:
-          RestApiId: !Ref MeetingAPIGateway
-          Path: /api/rooms/{id}
-          Method: GET
-
-  
+      Events:
+        GetRoomByID:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MeetingAPIGateway
+            Path: /api/rooms/{id}
+            Method: GET
+            Auth:
+              Authorizer: UserAuthorizer

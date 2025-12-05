@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -38,6 +39,8 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	if err := json.Unmarshal([]byte(request.Body), &loginReq); err != nil {
 		return shared.Response(400, dto.ErrorResponse{Error: "Invalid request body"})
 	}
+
+	log.Printf("%+v", loginReq)
 
 	token, user, err := authService.Login(loginReq.Email, loginReq.Password)
 	if err != nil {

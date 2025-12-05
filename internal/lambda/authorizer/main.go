@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -22,67 +22,50 @@ func init() {
 	jwtGenerator = auth.NewJWTGenerator(jwtSecret, 0)
 }
 
-func handler(ctx context.Context, request events.APIGatewayCustomAuthorizerRequest) (events.APIGatewayCustomAuthorizerResponse, error) {
-	token := strings.TrimPrefix(request.AuthorizationToken, "Bearer ")
+func handler(ctx context.Context, request events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGatewayV2CustomAuthorizerSimpleResponse, error) {
+	authHeader := request.Headers["authorization"]
+	if authHeader == "" {
+		authHeader = request.Headers["Authorization"]
+	}
 
-	if token == "" {
-		fmt.Println("Unauthorized: No token provided")
-		return denyPolicy(request.MethodArn), nil
+	if authHeader == "" {
+		log.Printf("Unauthorized: No Authorization header")
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+		}, nil
+	}
+
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+	if token == "" || token == authHeader {
+		log.Printf("Unauthorized: Invalid Bearer token format")
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+		}, nil
 	}
 
 	claims, err := jwtGenerator.ValidateToken(token)
 	if err != nil {
-		fmt.Printf("Unauthorized: Invalid token - %v\n", err)
-		return denyPolicy(request.MethodArn), nil
+		log.Printf("Unauthorized: Invalid token - %v\n", err)
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+		}, nil
 	}
 
 	if claims.UserID == "" {
-		fmt.Println("Unauthorized: Invalid user ID in token")
-		return denyPolicy(request.MethodArn), nil
+		log.Println("Unauthorized: Invalid user ID in token")
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+		}, nil
 	}
 
-	if claims.Role != "admin" {
-		fmt.Printf("Unauthorized: User %s is not admin (role: %s)\n", claims.UserID, claims.Role)
-		return denyPolicy(request.MethodArn), nil
-	}
-
-	return allowPolicy(request.MethodArn, claims.UserID, claims.Role), nil
-}
-
-func allowPolicy(resource, userID, role string) events.APIGatewayCustomAuthorizerResponse {
-	return events.APIGatewayCustomAuthorizerResponse{
-		PrincipalID: userID,
-		PolicyDocument: events.APIGatewayCustomAuthorizerPolicy{
-			Version: "2012-10-17",
-			Statement: []events.IAMPolicyStatement{
-				{
-					Action:   []string{"execute-api:Invoke"},
-					Effect:   "Allow",
-					Resource: []string{resource},
-				},
-			},
+	log.Printf("Authorized: User %s with role %s\n", claims.UserID, claims.Role)
+	return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+		IsAuthorized: true,
+		Context: map[string]interface{}{
+			"userId": claims.UserID,
+			"role":   claims.Role,
 		},
-		Context: map[string]any{
-			"userId": userID,
-			"role":   role,
-		},
-	}
-}
-
-func denyPolicy(resource string) events.APIGatewayCustomAuthorizerResponse {
-	return events.APIGatewayCustomAuthorizerResponse{
-		PrincipalID: "unauthorized",
-		PolicyDocument: events.APIGatewayCustomAuthorizerPolicy{
-			Version: "2012-10-17",
-			Statement: []events.IAMPolicyStatement{
-				{
-					Action:   []string{"execute-api:Invoke"},
-					Effect:   "Deny",
-					Resource: []string{resource},
-				},
-			},
-		},
-	}
+	}, nil
 }
 
 func main() {

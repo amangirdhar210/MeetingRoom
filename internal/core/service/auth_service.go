@@ -1,6 +1,7 @@
 package service
 
 import (
+	"log"
 	"strings"
 
 	"github.com/amangirdhar210/meeting-room/internal/core/domain"
@@ -36,6 +37,8 @@ func (s *authService) Login(email, password string) (string, *domain.User, error
 	if user == nil {
 		return "", nil, domain.ErrUnauthorized
 	}
+
+	log.Println(user)
 
 	if !s.passwordHasher.VerifyPassword(user.Password, password) {
 		return "", nil, domain.ErrUnauthorized

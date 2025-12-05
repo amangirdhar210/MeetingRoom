@@ -69,3 +69,19 @@ type TimeSlotDTO struct {
 	EndTime   int64 `json:"endTime"`
 	Duration  int   `json:"duration"`
 }
+
+type RoomDynamoDBItem struct {
+	PK          string   `dynamodbav:"PK"`
+	SK          string   `dynamodbav:"SK"`
+	ID          string   `dynamodbav:"ID"`
+	Name        string   `dynamodbav:"Name"`
+	RoomNumber  int      `dynamodbav:"RoomNumber"`
+	Capacity    int      `dynamodbav:"Capacity"`
+	Floor       int      `dynamodbav:"Floor"`
+	Amenities   []string `dynamodbav:"Amenities"`
+	Status      string   `dynamodbav:"Status"`
+	Location    string   `dynamodbav:"Location"`
+	Description string   `dynamodbav:"Description,omitempty"`
+	CreatedAt   int64    `dynamodbav:"CreatedAt"`
+	UpdatedAt   int64    `dynamodbav:"UpdatedAt"`
+}

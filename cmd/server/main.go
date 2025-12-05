@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/amangirdhar210/meeting-room/internal/adapters/auth"
@@ -62,7 +61,7 @@ func main() {
 		jwtGenerator,
 	)
 
-	fmt.Printf("Server starting on http://localhost%s\n", cfg.Server.Port)
+	log.Printf("Server starting on http://localhost%s\n", cfg.Server.Port)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
