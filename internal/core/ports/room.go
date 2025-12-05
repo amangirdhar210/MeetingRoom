@@ -8,5 +8,5 @@ type RoomRepository interface {
 	GetByID(id string) (*domain.Room, error)
 	UpdateAvailability(id string, status string) error
 	DeleteByID(id string) error
-	SearchWithFilters(minCapacity, maxCapacity int, floor *int, amenities []string) ([]domain.Room, error)
+	SearchWithFilters(minCapacity, maxCapacity int, floor *int) ([]domain.Room, error)
 }

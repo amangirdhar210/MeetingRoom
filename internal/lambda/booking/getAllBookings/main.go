@@ -24,8 +24,13 @@ func init() {
 	bookingService = service.NewBookingService(bookingRepo, roomRepo, userRepo)
 }
 
-func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	return events.APIGatewayProxyResponse{}, nil
+func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	bookings, err := bookingService.GetAllBookings()
+	if err != nil {
+		return shared.Response(404, map[string]string{"error": "No bookings found"})
+	}
+
+	return shared.Response(200, bookings)
 }
 
 func main() {

@@ -74,8 +74,8 @@ func (s *roomService) DeleteRoomByID(id string) error {
 	return s.repo.DeleteByID(id)
 }
 
-func (s *roomService) SearchRooms(minCapacity, maxCapacity int, floor *int, amenities []string, startTime, endTime *int64) ([]domain.Room, error) {
-	rooms, err := s.repo.SearchWithFilters(minCapacity, maxCapacity, floor, amenities)
+func (s *roomService) SearchRooms(minCapacity, maxCapacity int, floor *int, startTime, endTime *int64) ([]domain.Room, error) {
+	rooms, err := s.repo.SearchWithFilters(minCapacity, maxCapacity, floor)
 	if err != nil {
 		return nil, err
 	}

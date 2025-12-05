@@ -18,7 +18,7 @@ type RoomService interface {
 	GetAllRooms() ([]domain.Room, error)
 	GetRoomByID(id string) (*domain.Room, error)
 	DeleteRoomByID(id string) error
-	SearchRooms(minCapacity, maxCapacity int, floor *int, amenities []string, startTime, endTime *int64) ([]domain.Room, error)
+	SearchRooms(minCapacity, maxCapacity int, floor *int, startTime, endTime *int64) ([]domain.Room, error)
 	CheckAvailability(roomID string, startTime, endTime int64) (bool, []domain.Booking, error)
 	GetAvailableSlots(roomID string, date int64, slotDuration int) ([]domain.TimeSlot, error)
 }

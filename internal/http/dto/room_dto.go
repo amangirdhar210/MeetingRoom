@@ -73,6 +73,8 @@ type TimeSlotDTO struct {
 type RoomDynamoDBItem struct {
 	PK          string   `dynamodbav:"PK"`
 	SK          string   `dynamodbav:"SK"`
+	LSI1        int      `dynamodbav:"LSI1"`
+	LSI2        int      `dynamodbav:"LSI2"`
 	ID          string   `dynamodbav:"ID"`
 	Name        string   `dynamodbav:"Name"`
 	RoomNumber  int      `dynamodbav:"RoomNumber"`

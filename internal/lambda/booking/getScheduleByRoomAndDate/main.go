@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
-	"strconv"
-
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
+	"log"
+	"time"
 
 	dynamodbRepo "github.com/amangirdhar210/meeting-room/internal/adapters/repositories/dynamoDB"
 	"github.com/amangirdhar210/meeting-room/internal/core/service"
+	"github.com/amangirdhar210/meeting-room/internal/http/dto"
 	"github.com/amangirdhar210/meeting-room/internal/lambda/shared"
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 )
 
 var bookingService service.BookingService
@@ -27,26 +28,33 @@ func init() {
 }
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	roomID := request.PathParameters["roomId"]
+	log.Println("GetScheduleByRoomAndDate handler invoked")
+
+	roomID := request.PathParameters["id"]
 	if roomID == "" {
-		return shared.Response(400, map[string]string{"error": "Room ID is required"})
+		log.Println("Room ID is missing")
+		return shared.Response(400, dto.ErrorResponse{Error: "Invalid room id"})
 	}
 
 	dateStr := request.QueryStringParameters["date"]
 	if dateStr == "" {
-		return shared.Response(400, map[string]string{"error": "Date parameter is required"})
+		log.Println("Date parameter is missing")
+		return shared.Response(400, dto.ErrorResponse{Error: "Date parameter is required (format: YYYY-MM-DD)"})
 	}
 
-	date, err := strconv.ParseInt(dateStr, 10, 64)
+	targetDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
-		return shared.Response(400, map[string]string{"error": "Invalid date format"})
+		log.Printf("Error parsing date: %v", err)
+		return shared.Response(400, dto.ErrorResponse{Error: "Invalid date format, use YYYY-MM-DD"})
 	}
 
-	schedule, err := bookingService.GetRoomScheduleByDate(roomID, date)
+	schedule, err := bookingService.GetRoomScheduleByDate(roomID, targetDate.Unix())
 	if err != nil {
-		return shared.Response(404, map[string]string{"error": "Room schedule not found"})
+		log.Printf("Error getting schedule by date: %v", err)
+		return shared.Response(500, dto.ErrorResponse{Error: "Internal server error"})
 	}
 
+	log.Printf("Retrieved schedule for room %s on date %s", roomID, dateStr)
 	return shared.Response(200, schedule)
 }
 

@@ -167,7 +167,7 @@ func (r *roomRepository) DeleteByID(roomID string) error {
 	return nil
 }
 
-func (r *roomRepository) SearchWithFilters(minCapacity, maxCapacity int, floorNumber *int, requestedAmenities []string) ([]domain.Room, error) {
+func (r *roomRepository) SearchWithFilters(minCapacity, maxCapacity int, floorNumber *int) ([]domain.Room, error) {
 	query := `SELECT id, name, room_number, capacity, floor, amenities, status, location, description, created_at, updated_at FROM rooms WHERE 1=1`
 	queryArgs := []any{}
 
@@ -198,26 +198,6 @@ func (r *roomRepository) SearchWithFilters(minCapacity, maxCapacity int, floorNu
 		room, err := r.scanRoom(rows)
 		if err != nil {
 			return nil, err
-		}
-
-		if len(requestedAmenities) > 0 {
-			hasAllAmenities := true
-			for _, requestedAmenity := range requestedAmenities {
-				found := false
-				for _, roomAmenity := range room.Amenities {
-					if roomAmenity == requestedAmenity {
-						found = true
-						break
-					}
-				}
-				if !found {
-					hasAllAmenities = false
-					break
-				}
-			}
-			if !hasAllAmenities {
-				continue
-			}
 		}
 
 		rooms = append(rooms, room)

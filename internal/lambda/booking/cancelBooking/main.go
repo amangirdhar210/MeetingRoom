@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+
 	dynamodbRepo "github.com/amangirdhar210/meeting-room/internal/adapters/repositories/dynamoDB"
 	"github.com/amangirdhar210/meeting-room/internal/core/service"
 	"github.com/amangirdhar210/meeting-room/internal/lambda/shared"
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
 )
 
 var bookingService service.BookingService
@@ -24,8 +25,17 @@ func init() {
 	bookingService = service.NewBookingService(bookingRepo, roomRepo, userRepo)
 }
 
-func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	return events.APIGatewayProxyResponse{}, nil
+func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	bookingID := request.PathParameters["id"]
+	if bookingID == "" {
+		return shared.Response(400, map[string]string{"error": "Booking ID is required"})
+	}
+
+	if err := bookingService.CancelBooking(bookingID); err != nil {
+		return shared.Response(400, map[string]string{"error": err.Error()})
+	}
+
+	return shared.Response(200, map[string]string{"message": "Booking cancelled successfully"})
 }
 
 func main() {

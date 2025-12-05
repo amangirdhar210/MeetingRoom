@@ -47,3 +47,18 @@ type RoomScheduleResponse struct {
 	Bookings   []DetailedBookingDTO `json:"bookings"`
 	TotalSlots int                  `json:"totalSlots"`
 }
+
+type BookingDynamoDBItem struct {
+	PK        string `dynamodbav:"PK"`
+	SK        string `dynamodbav:"SK"`
+	UserID    string `dynamodbav:"UserID"`
+	RoomID    string `dynamodbav:"RoomID"`
+	Date      int64  `dynamodbav:"Date"`
+	ID        string `dynamodbav:"ID"`
+	StartTime int64  `dynamodbav:"StartTime"`
+	EndTime   int64  `dynamodbav:"EndTime"`
+	Purpose   string `dynamodbav:"Purpose"`
+	Status    string `dynamodbav:"Status"`
+	CreatedAt int64  `dynamodbav:"CreatedAt"`
+	UpdatedAt int64  `dynamodbav:"UpdatedAt"`
+}

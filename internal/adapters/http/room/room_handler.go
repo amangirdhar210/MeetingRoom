@@ -161,15 +161,6 @@ func (h *Handler) SearchRooms(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var amenities []string
-	if amenitiesStr := queryParams.Get("amenities"); amenitiesStr != "" {
-		amenities = []string{}
-		if err := json.Unmarshal([]byte(amenitiesStr), &amenities); err == nil {
-		} else {
-			amenities = []string{amenitiesStr}
-		}
-	}
-
 	var startTime, endTime *int64
 	if startStr := queryParams.Get("startTime"); startStr != "" {
 		if t, err := time.Parse(time.RFC3339, startStr); err == nil {
@@ -184,7 +175,7 @@ func (h *Handler) SearchRooms(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	rooms, err := h.roomService.SearchRooms(minCapacity, maxCapacity, floor, amenities, startTime, endTime)
+	rooms, err := h.roomService.SearchRooms(minCapacity, maxCapacity, floor, startTime, endTime)
 	if err != nil {
 		httputil.HandleError(w, err)
 		return
